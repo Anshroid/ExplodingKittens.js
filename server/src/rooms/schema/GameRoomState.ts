@@ -60,5 +60,8 @@ export class GameRoomState extends Schema {
     @type(["number"]) discard = new ArraySchema<Card>();
 
     isImplodingEnabled: boolean;
+    nopeQTEMode: boolean;
+    nopeTimeout: ReturnType<typeof setTimeout>;
     deck = new Array<Card>();
+    noped = false;
 }

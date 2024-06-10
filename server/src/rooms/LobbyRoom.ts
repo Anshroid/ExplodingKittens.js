@@ -13,6 +13,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
         this.onMessage("changeSettings", (client, message) => {
             if (this.state.ownerId === client.sessionId) {
                 this.state.isImplodingEnabled = message.isImplodingEnabled;
+                this.state.nopeQTEMode = message.nopeQTEMode;
             }
         });
 

@@ -16,4 +16,5 @@ export class LobbyRoomState extends Schema {
   @type("boolean") started: boolean = false;
 
   @type("boolean") isImplodingEnabled: boolean = false;
+  @type("boolean") nopeQTEMode: boolean = true;
 }
