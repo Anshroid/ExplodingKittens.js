@@ -1,0 +1,23 @@
+export enum Card {
+    EXPLODING,
+    DEFUSE,
+    TACOCAT,
+    BEARDCAT,
+    RAINBOWCAT,
+    POTATOCAT,
+    CATTERMELON,
+    ATTACK,
+    FAVOUR,
+    NOPE,
+    SHUFFLE,
+    SKIP,
+    SEETHEFUTURE,
+
+// Imploding Kittens expansion
+    IMPLODING,
+    REVERSE,
+    DRAWFROMBOTTOM,
+    FERALCAT,
+    ALTERTHEFUTURE,
+    TARGETEDATTACK,
+}
