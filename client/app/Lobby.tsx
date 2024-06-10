@@ -1,10 +1,16 @@
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
+import {ColyseusContext, DiscordSDKContext} from "./contexts";
+import {AuthResponse} from "./util";
+import {DiscordSDK} from "@discord/embedded-app-sdk";
+import {Guild} from "@discord/embedded-app-sdk/output/schema/types";
 
-export default function Lobby({auth, discordSdk}) {
+export default function Lobby() {
+    let { auth, discordSDK } = useContext(DiscordSDKContext);
+    let { client } = useContext(ColyseusContext)
     let [imageURL, setImageURL] = useState('');
 
     useEffect(() => {
-        getGuildAvatar(auth, discordSdk).then((URL) => {setImageURL(URL);})
+        getGuildAvatar(auth, discordSDK).then((URL) => {setImageURL(URL);})
     }, []);
 
     return (
@@ -18,7 +24,7 @@ export default function Lobby({auth, discordSdk}) {
     )
 }
 
-async function getGuildAvatar(auth, discordSdk) {
+async function getGuildAvatar(auth: AuthResponse, discordSDK: DiscordSDK) {
     const guilds = await fetch(`https://discord.com/api/v10/users/@me/guilds`, {
         headers: {
             Authorization: `Bearer ${auth.access_token}`,
@@ -26,7 +32,7 @@ async function getGuildAvatar(auth, discordSdk) {
         },
     }).then((response) => response.json());
 
-    const currentGuild = guilds.find((g) => g.id === discordSdk.guildId);
+    const currentGuild = guilds.find((g: Guild) => g.id === discordSDK.guildId);
 
     return `https://cdn.discordapp.com/icons/${currentGuild.id}/${currentGuild.icon}.webp?size=128`
 }

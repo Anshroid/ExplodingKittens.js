@@ -1,11 +1,15 @@
-export async function setupDiscordSdk(discordSdk) {
-    let auth;
+import {DiscordSDK} from "@discord/embedded-app-sdk";
+
+export type AuthResponse = Awaited<ReturnType<typeof DiscordSDK.prototype.commands.authenticate>>
+export async function setupDiscordSdk(discordSdk: DiscordSDK) {
+    let auth: AuthResponse;
 
     await discordSdk.ready();
     console.log("Discord SDK is ready");
 
     // Authorize with Discord Client
     const { code } = await discordSdk.commands.authorize({
+        // @ts-ignore
         client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
         response_type: "code",
         state: "",
