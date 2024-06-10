@@ -8,12 +8,12 @@ export default function Lobby({auth, discordSdk}) {
     }, []);
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col place-items-center justify-center pt-5 pb-5">
             <h1 className="text-3xl font-bold underline font-sans text-center text-white">
               Hello world!
             </h1>
             <p></p>
-            <img src={imageURL} alt={"server icon"} className={"rounded-3xl justify-center size-32 place-self-center mt-24"} />
+            <img src={imageURL} alt={"server icon"} className={"rounded-3xl size-32 flex-1"} />
         </div>
     )
 }
