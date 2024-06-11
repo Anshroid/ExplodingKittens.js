@@ -9,7 +9,6 @@ export async function setupDiscordSdk(discordSdk: DiscordSDK) {
 
     // Authorize with Discord Client
     const { code } = await discordSdk.commands.authorize({
-        // @ts-ignore
         client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
         response_type: "code",
         state: "",

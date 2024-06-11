@@ -1,11 +1,10 @@
 import {Container, createRoot} from "react-dom/client";
-import App from "./App.js";
-import {setupDiscordSdk} from "./util"
+import App from "./pages/App";
+import {setupDiscordSdk} from "./utility/util"
 import './index.css'
 
 import {DiscordSDK} from "@discord/embedded-app-sdk";
-import {ColyseusContext, ColyseusContextType, DiscordSDKContext, DiscordSDKContextType} from "./contexts";
-import {Client} from "colyseus.js";
+import {DiscordSDKContext, DiscordSDKContextType} from "./utility/contexts";
 
 const discordSDK = new DiscordSDK(import.meta.env.VITE_DISCORD_CLIENT_ID);
 
@@ -17,14 +16,12 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
     discordContext.auth = receivedAuth;
     discordContext.discordSDK = discordSDK;
 
-    const colyseusContext = new ColyseusContextType();
-    colyseusContext.client = new Client("/api")
+    const loading = document.getElementById("loading");
+    if (loading) loading.style.display = 'none';
 
     createRoot(document.getElementById('root') as Container).render(
         <DiscordSDKContext.Provider value={discordContext}>
-            <ColyseusContext.Provider value={colyseusContext}>
                 <App/>
-            </ColyseusContext.Provider>
         </DiscordSDKContext.Provider>
     )
 });

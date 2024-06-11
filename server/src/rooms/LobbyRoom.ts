@@ -4,11 +4,10 @@ import {LobbyPlayer, LobbyRoomState} from "./schema/LobbyRoomState";
 export class LobbyRoom extends Room<LobbyRoomState> {
     maxClients = 12;
 
-    onCreate(options: { name: string; channelId: string }) {
+    onCreate(options: { instanceId: string }) {
         this.setState(new LobbyRoomState());
-
-        this.state.name = options.name;
-        this.state.channelId = options.channelId;
+        this.setPrivate(true).then();
+        this.roomId = options.instanceId;
 
         this.onMessage("changeSettings", (client, message) => {
             if (this.state.ownerId === client.sessionId) {
@@ -24,7 +23,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
         });
     }
 
-    onJoin(client: Client, options: { userId: string, displayName: string }) {
+    onJoin(client: Client, options: { displayName: string }) {
         console.log(client.sessionId, "joined!");
 
         if (!this.state.ownerId) {
@@ -32,7 +31,6 @@ export class LobbyRoom extends Room<LobbyRoomState> {
         }
 
         const player = new LobbyPlayer();
-        player.userId = options.userId;
         player.displayName = options.displayName;
         this.state.players.set(client.sessionId, player);
     }

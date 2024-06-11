@@ -5,7 +5,7 @@ export default {
   relative: true,
   content: [
       './index.html',
-      './app/*.{js,jsx}',
+      './app/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {},

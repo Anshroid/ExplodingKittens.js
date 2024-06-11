@@ -16,12 +16,14 @@
   },
   "dependencies": {
     "@discord/embedded-app-sdk": "^1.2.0",
+    "@p3ntest/use-colyseus": "^0.0.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "colyseus.js": "^0.15.23",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-switch": "^7.0.0",
     "typescript": "^5.4.5"
   }
 }

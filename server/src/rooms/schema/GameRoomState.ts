@@ -6,7 +6,6 @@ import {LobbyPlayer} from "./LobbyRoomState.ts";
 export class GamePlayer extends Schema {
 
     @type("string") sessionId: string;
-    @type("string") userId: string;
     @type("string") displayName: string;
     @type("number") turnOrder: number;
 
@@ -22,8 +21,6 @@ export class GamePlayer extends Schema {
 
 export class GameRoomState extends Schema {
 
-    @type("string") name: string;
-    @type("string") channelId: string;
     @type("string") ownerId: string;
     @type("number") numPlayers: number;
     @type("boolean") started: boolean = false;

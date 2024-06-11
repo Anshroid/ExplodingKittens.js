@@ -15,17 +15,16 @@ export class GameRoom extends Room<GameRoomState> {
     maxClients = 12;
 
     onCreate(options: {
-        name: string;
-        channelId: string,
+        instanceId: string;
         ownerId: string,
         numPlayers: number,
         isImplodingEnabled: boolean,
         nopeQTEMode: boolean,
     }) {
         this.setState(new GameRoomState());
+        this.setPrivate(true).then();
+        this.roomId = options.instanceId;
 
-        this.state.name = options.name;
-        this.state.channelId = options.channelId;
         this.state.ownerId = options.ownerId;
         this.state.numPlayers = options.numPlayers;
 
@@ -221,11 +220,10 @@ export class GameRoom extends Room<GameRoomState> {
         });
     }
 
-    onJoin(client: Client, options: { userId: string, displayName: string }) {
+    onJoin(client: Client, options: { displayName: string }) {
         console.log(client.sessionId, "joined!");
         const player = new GamePlayer();
         player.sessionId = client.sessionId;
-        player.userId = options.userId;
         player.displayName = options.displayName;
         player.cards.push(...this.state.deck.slice(0, 5), Card.DEFUSE); // Draw four cards from deck and a defuse card
 
@@ -311,7 +309,6 @@ export class GameRoom extends Room<GameRoomState> {
         this.state.discard.push(...this.state.players[index].cards)
         const deadPlayer = this.state.players.splice(index, 1)[0]
         const spectator = new LobbyPlayer();
-        spectator.userId = deadPlayer.userId;
         spectator.displayName = deadPlayer.displayName;
         this.state.spectators.push(spectator);
 
