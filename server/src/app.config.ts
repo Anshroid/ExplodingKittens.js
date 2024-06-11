@@ -4,7 +4,6 @@ import {playground} from "@colyseus/playground";
 
 import {GameRoom} from "./rooms/GameRoom";
 import basicAuth from "express-basic-auth";
-import {LobbyRoom} from "./rooms/LobbyRoom";
 
 const basicAuthMiddleware = basicAuth({
     users: {
@@ -16,10 +15,7 @@ const basicAuthMiddleware = basicAuth({
 export default config({
 
     initializeGameServer: (gameServer) => {
-
-        gameServer.define('lobby_room', LobbyRoom);
         gameServer.define('game_room', GameRoom);
-
     },
 
     initializeExpress: (app) => {

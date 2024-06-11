@@ -1,18 +1,18 @@
-import {lobbyManager} from "../utility/contexts";
 import {HTMLAttributes} from "react";
+import {useColyseusState} from "../utility/contexts";
 
 export default function PlayerList(props: HTMLAttributes<HTMLDivElement>) {
-    const players = lobbyManager.useColyseusState((state) => state.players)
+    const spectators = useColyseusState((state) => state.spectators)
 
     return (
         <div {...props}>
             <h2 className={"text-white font-bold underline"}>Players in lobby</h2>
             <ol>
                 {
-                    players ?
-                        players.map(player => (
-                            <li key={player.sessionId}
-                                className={"text-white text-center"}>{player.displayName}</li>
+                    spectators ?
+                        spectators.map(spectator => (
+                            <li key={spectator.sessionId}
+                                className={"text-white text-center"}>{spectator.displayName}</li>
                         ))
                         :
                         null

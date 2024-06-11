@@ -2,7 +2,6 @@ import {AuthResponse} from "./util";
 import {DiscordSDK} from "@discord/embedded-app-sdk";
 import {createContext} from "react";
 import {colyseus} from "@p3ntest/use-colyseus"
-import {LobbyRoomState} from "../../../server/src/rooms/schema/LobbyRoomState";
 import {GameRoomState} from "../../../server/src/rooms/schema/GameRoomState";
 
 export class DiscordSDKContextType {
@@ -17,5 +16,11 @@ export class DiscordSDKContextType {
 
 export const DiscordSDKContext = createContext(new DiscordSDKContextType());
 
-export const lobbyManager = colyseus<LobbyRoomState>('/api');
-export const gameManager = colyseus<GameRoomState>('/api');
+export const {
+    client,
+    connectToColyseus,
+    setCurrentRoom,
+    disconnectFromColyseus,
+    useColyseusRoom,
+    useColyseusState
+} = colyseus<GameRoomState>('/api');

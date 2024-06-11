@@ -1,22 +1,22 @@
 import {HTMLAttributes} from "react";
-import {lobbyManager} from "../utility/contexts";
 import ReactSwitch from "react-switch";
-import {Room} from "colyseus.js";
+import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 
-export default function SettingsList(props: HTMLAttributes<HTMLDivElement> & { room: Room, ownerId: string | undefined }) {
-    let isImplodingEnabled = lobbyManager.useColyseusState((state) => state.isImplodingEnabled)
-    if (isImplodingEnabled === undefined || props.ownerId === undefined) return;
+export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
+    let room = useColyseusRoom();
+    let isImplodingEnabled = useColyseusState((state) => state.isImplodingEnabled)
+    let ownerId = useColyseusState((state) => state.ownerId);
 
-    if (!props.room) return;
-    let isOwner = props.room.sessionId === props.ownerId;
+    if (isImplodingEnabled === undefined || room === undefined) return;
 
-    const {room, ownerId, ...divProps} = props;
+    let isOwner = room.sessionId === ownerId;
 
     return (
-        <div {...divProps}>
+        <div {...props}>
+            <h2 className={"text-white font-bold underline"}></h2>
             <label className={"text-white align-middle"}>Use Imploding Kittens?</label>
             <ReactSwitch checked={isImplodingEnabled} onChange={(checked) => {
-                props.room.send("changeSettings", {isImplodingEnabled: checked, nopeQTEMode: true})
+                room.send("changeSettings", {isImplodingEnabled: checked, nopeQTEMode: true})
             }} disabled={!isOwner} className={"align-middle ml-1 scale-75"} checkedIcon={false} uncheckedIcon={false}/>
         </div>
     )

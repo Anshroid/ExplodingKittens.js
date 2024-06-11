@@ -1,13 +1,18 @@
 import {Schema, ArraySchema, type, filter} from "@colyseus/schema";
 import {Client} from "@colyseus/core";
 import {Card} from "../../../shared/card";
-import {LobbyPlayer} from "./LobbyRoomState.ts";
+
+export class LobbyPlayer extends Schema {
+
+  @type("string") displayName: string;
+  @type("string") sessionId: string;
+
+}
 
 export class GamePlayer extends Schema {
 
     @type("string") sessionId: string;
     @type("string") displayName: string;
-    @type("number") turnOrder: number;
 
     @filter(function (
         this: GamePlayer,
@@ -21,18 +26,25 @@ export class GamePlayer extends Schema {
 
 export class GameRoomState extends Schema {
 
+    // Functional properties
     @type("string") ownerId: string;
-    @type("number") numPlayers: number;
     @type("boolean") started: boolean = false;
     @type([GamePlayer]) players = new ArraySchema<GamePlayer>();
     @type([LobbyPlayer]) spectators = new ArraySchema<LobbyPlayer>();
 
-    @type("number") turnIndex: number;
-    @type("number") turnCount: number;
-    @type("number") turnRepeats: number;
+    // Game Settings
+    @type("boolean") isImplodingEnabled = true;
+    @type("boolean") nopeQTEMode = true;
+
+    // Generic game state
+    @type("number") turnIndex: number = 0;
+    @type("number") turnCount: number = 0;
+    @type("number") turnRepeats: number = 1;
     @type("number") turnOrder: number = 1;
     @type("boolean") alteringTheFuture: boolean;
+    @type(["number"]) discard = new ArraySchema<Card>();
 
+    // Imploding kitten state
     @type("boolean") implosionRevealed: boolean = false;
     @filter(function (
         this: GameRoomState,
@@ -53,12 +65,9 @@ export class GameRoomState extends Schema {
     })
     @type("string") distanceToImplosionEstimator: string;
 
-
-    @type(["number"]) discard = new ArraySchema<Card>();
-
-    isImplodingEnabled: boolean;
-    nopeQTEMode: boolean;
+    // Private properties
     nopeTimeout: ReturnType<typeof setTimeout>;
-    deck = new Array<Card>();
+
+    @type(["number"]) deck = new ArraySchema<Card>();
     noped = false;
 }

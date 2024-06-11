@@ -1,9 +1,9 @@
-import {DiscordSDKContext, gameManager} from "../utility/contexts";
+import {DiscordSDKContext, useColyseusRoom} from "../utility/contexts";
 import {useContext, useEffect} from "react";
 
 export default function Game() {
     let {auth, discordSDK} = useContext(DiscordSDKContext);
-    let gameRoom = gameManager.useColyseusRoom();
+    let room = useColyseusRoom();
 
     useEffect(() => {
         // Listen to schema changes

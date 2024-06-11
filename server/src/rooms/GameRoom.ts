@@ -1,7 +1,6 @@
 import {Client, Room} from "@colyseus/core";
-import {GamePlayer, GameRoomState} from "./schema/GameRoomState";
+import {LobbyPlayer, GamePlayer, GameRoomState} from "./schema/GameRoomState";
 import {Card} from "../../shared/card";
-import {LobbyPlayer} from "./schema/LobbyRoomState.ts";
 
 // https://stackoverflow.com/a/12646864/9094935
 function shuffleArray(array: Array<any>) {
@@ -14,68 +13,94 @@ function shuffleArray(array: Array<any>) {
 export class GameRoom extends Room<GameRoomState> {
     maxClients = 12;
 
-    onCreate(options: {
-        instanceId: string;
-        ownerId: string,
-        numPlayers: number,
-        isImplodingEnabled: boolean,
-        nopeQTEMode: boolean,
-    }) {
+    onCreate(options: { instanceId: string }) {
         this.setState(new GameRoomState());
         this.setPrivate(true).then();
         this.roomId = options.instanceId;
 
-        this.state.ownerId = options.ownerId;
-        this.state.numPlayers = options.numPlayers;
+        // Lobby messages
+        this.onMessage("changeSettings", (client, message) => {
+            if (this.state.ownerId === client.sessionId && !this.state.started) {
+                this.state.isImplodingEnabled = message.isImplodingEnabled;
+                this.state.nopeQTEMode = message.nopeQTEMode;
+            }
+        });
 
-        this.state.isImplodingEnabled = options.isImplodingEnabled;
-        this.state.nopeQTEMode = options.nopeQTEMode;
-
-        const gameSize = Math.floor(this.state.numPlayers / 6) + 1
-
-        this.state.deck.push(
-            ...Array(4 * gameSize).fill(Card.TACOCAT),
-            ...Array(4 * gameSize).fill(Card.BEARDCAT),
-            ...Array(4 * gameSize).fill(Card.RAINBOWCAT),
-            ...Array(4 * gameSize).fill(Card.POTATOCAT),
-            ...Array(4 * gameSize).fill(Card.CATTERMELON),
-            ...Array(4 * gameSize).fill(Card.ATTACK),
-            ...Array(4 * gameSize).fill(Card.FAVOUR),
-            ...Array(5 * gameSize).fill(Card.NOPE),
-            ...Array(4 * gameSize).fill(Card.SHUFFLE),
-            ...Array(4 * gameSize).fill(Card.SKIP),
-            ...Array(5 * gameSize).fill(Card.SEETHEFUTURE),
-        );
-
-        if (this.state.isImplodingEnabled) {
-            this.state.deck.push(
-                ...Array(4 * gameSize).fill(Card.REVERSE),
-                ...Array(4 * gameSize).fill(Card.DRAWFROMBOTTOM),
-                ...Array(4 * gameSize).fill(Card.FERALCAT),
-                ...Array(4 * gameSize).fill(Card.ALTERTHEFUTURE),
-                ...Array(3 * gameSize).fill(Card.TARGETEDATTACK),
-            )
-        }
-
-        shuffleArray(this.state.deck);
-
-        this.onMessage("drawCard", (client) => {
-            let card = this.state.deck.shift();
-            this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
-            if ([Card.EXPLODING, Card.IMPLODING].includes(card)) {
-                this.processDeath(card, client)
+        this.onMessage("start", (client) => {
+            if (this.state.ownerId !== client.sessionId || this.state.started || this.state.spectators.length < 2) {
                 return;
             }
+
+            this.state.started = true;
+
+            const gameSize = Math.floor(this.state.spectators.length / 6) + 1
+
+            this.state.deck.push(
+                ...Array(4 * gameSize).fill(Card.TACOCAT),
+                ...Array(4 * gameSize).fill(Card.BEARDCAT),
+                ...Array(4 * gameSize).fill(Card.RAINBOWCAT),
+                ...Array(4 * gameSize).fill(Card.POTATOCAT),
+                ...Array(4 * gameSize).fill(Card.CATTERMELON),
+                ...Array(4 * gameSize).fill(Card.ATTACK),
+                ...Array(4 * gameSize).fill(Card.FAVOUR),
+                ...Array(5 * gameSize).fill(Card.NOPE),
+                ...Array(4 * gameSize).fill(Card.SHUFFLE),
+                ...Array(4 * gameSize).fill(Card.SKIP),
+                ...Array(5 * gameSize).fill(Card.SEETHEFUTURE),
+            );
+
+            if (this.state.isImplodingEnabled) {
+                this.state.deck.push(
+                    ...Array(4 * gameSize).fill(Card.REVERSE),
+                    ...Array(4 * gameSize).fill(Card.DRAWFROMBOTTOM),
+                    ...Array(4 * gameSize).fill(Card.FERALCAT),
+                    ...Array(4 * gameSize).fill(Card.ALTERTHEFUTURE),
+                    ...Array(3 * gameSize).fill(Card.TARGETEDATTACK),
+                )
+            }
+
+            shuffleArray(this.state.deck);
+
+            for (const spectator of this.state.spectators) {
+                const player = new GamePlayer();
+                player.sessionId = spectator.sessionId;
+                player.displayName = spectator.displayName;
+                player.cards.push(...this.state.deck.splice(0, 4), Card.DEFUSE); // Draw four cards from deck and a defuse card
+
+                this.state.players.push(player);
+
+                this.clients.getById(spectator.sessionId).userData.isSpectator = false;
+            }
+
+            this.state.spectators.clear();
+
+            this.state.deck.push(
+                ...Array(this.state.players.length - 2).fill(Card.EXPLODING),
+                this.state.isImplodingEnabled ? Card.IMPLODING : Card.EXPLODING,
+                ...Array((gameSize * 6) - this.state.players.length).fill(Card.DEFUSE)
+            );
+
+            shuffleArray(this.state.deck);
+
+            this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
+        });
+
+        // Game messages
+        this.onMessage("drawCard", (client) => {
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+
+            let card = this.state.deck.shift();
+            this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
+            if (this.checkDeath(card, client)) return;
             this.state.players[this.state.turnIndex].cards.push(card);
             this.endTurn();
         })
 
         this.onMessage("playCard", (client, message: { card: Card, target?: number }) => {
-            if (this.state.turnIndex !== client.userData.playerIndex) {
-                return;
-            }
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
 
             this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(message.card), 1);
+            // TODO: Check if they actually have the card
 
             this.processNopeQTE(() => {
                 switch (message.card) {
@@ -101,10 +126,7 @@ export class GameRoom extends Room<GameRoomState> {
                     case Card.DRAWFROMBOTTOM:
                         let card = this.state.deck.pop();
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
-                        if ([Card.EXPLODING, Card.IMPLODING].includes(card)) {
-                            this.processDeath(card, client)
-                            break;
-                        }
+                        if (this.checkDeath(card, client)) return;
                         this.state.players[this.state.turnIndex].cards.push(card);
                         this.endTurn();
                         break;
@@ -113,7 +135,7 @@ export class GameRoom extends Room<GameRoomState> {
                         this.state.alteringTheFuture = true;
                     // noinspection FallThroughInSwitchStatementJS
                     case Card.SEETHEFUTURE:
-                        client.send("theFuture", {cards: this.state.deck.slice(0, 4)});
+                        client.send("theFuture", {cards: this.state.deck.slice(0, 3)});
                         break;
 
                     case Card.TARGETEDATTACK:
@@ -139,6 +161,9 @@ export class GameRoom extends Room<GameRoomState> {
             targetCard?: Card,
             targetIndex?: number
         }) => {
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+
+            // TODO: check if user has enough cards
             for (const card of message.cards) {
                 this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(card), 1);
             }
@@ -146,6 +171,8 @@ export class GameRoom extends Room<GameRoomState> {
             this.processNopeQTE(() => {
                 switch (message.cards.length) {
                     case 2:
+                        // TODO: check if target player has enough cards
+
                         if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => this.isCatCard(c)))) {
                             let stealIndex = ~~(Math.random() * this.state.players[message.target].cards.length);
                             this.state.players[this.state.turnIndex].cards.push(this.state.players[message.target].cards.splice(stealIndex)[0]);
@@ -191,7 +218,9 @@ export class GameRoom extends Room<GameRoomState> {
             })
         });
 
-        this.onMessage("alterTheFuture", (_, message: { cards: Array<Card> }) => {
+        this.onMessage("alterTheFuture", (client, message: { cards: Array<Card> }) => {
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+
             this.state.deck.splice(0, 3, ...message.cards);
         });
 
@@ -210,58 +239,64 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.players[this.state.turnIndex].cards.push(message.card);
         });
 
-        this.onMessage("chooseExplodingPositionResponse", (_, message: { index: number }) => {
+        this.onMessage("chooseExplodingPositionResponse", (client, message: { index: number }) => {
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+
             this.state.deck.splice(message.index, 0, Card.EXPLODING)
         });
 
-        this.onMessage("chooseImplodingPositionResponse", (_, message: { index: number }) => {
-            this.state.deck.splice(message.index, 0, Card.IMPLODING)
+        this.onMessage("chooseImplodingPositionResponse", (client, message: { index: number }) => {
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+
+            // TODO: fix
+            console.log(this.state.deck)
+            this.state.deck.splice(0, 0, Card.IMPLODING)
+
+            console.log(this.state.deck[0]);
+
         });
     }
 
     onJoin(client: Client, options: { displayName: string }) {
         console.log(client.sessionId, "joined!");
-        const player = new GamePlayer();
-        player.sessionId = client.sessionId;
-        player.displayName = options.displayName;
-        player.cards.push(...this.state.deck.slice(0, 5), Card.DEFUSE); // Draw four cards from deck and a defuse card
 
-        client.userData = {playerIndex: this.state.players.length};
-
-        this.state.players.push(player);
-
-        if (this.state.players.length === this.state.numPlayers) {
-            this.lock().then(() => {
-                const gameSize = Math.floor(this.state.numPlayers / 6) + 1;
-
-                this.state.started = true;
-                this.state.deck.push(
-                    ...Array(this.state.numPlayers - 2).fill(Card.EXPLODING),
-                    this.state.isImplodingEnabled ? Card.IMPLODING : Card.EXPLODING,
-                    ...Array((gameSize * 6) - this.state.numPlayers).fill(Card.DEFUSE)
-                );
-
-                shuffleArray(this.state.deck);
-
-                this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
-            });
+        if (!this.state.ownerId) {
+            this.state.ownerId = client.sessionId;
         }
+
+        const player = new LobbyPlayer();
+        player.displayName = options.displayName;
+        player.sessionId = client.sessionId;
+
+        client.userData = {playerIndex: this.state.spectators.length, isSpectator: true};
+
+        this.state.spectators.push(player);
     }
 
     onLeave(client: Client, consented: boolean) {
         console.log(client.sessionId, "left!");
 
-        if (!consented) {
-            return;
+        if (this.state.started) {
+            if (!consented) return;
+
+            this.state.discard.push(...this.state.players[client.userData.playerIndex].cards);
         }
 
-        if (this.state.started) {
-            this.state.discard.push(...this.state.players[client.userData.playerIndex].cards);
+        if (client.userData.isSpectator) {
+            this.state.spectators.splice(client.userData.playerIndex, 1);
         } else {
-            this.state.deck.push(...this.state.players[client.userData.playerIndex].cards);
-            this.state.deck.splice(this.state.deck.indexOf(Card.DEFUSE), 1);
+            this.state.players.splice(client.userData.playerIndex, 1);
         }
-        this.state.players.splice(client.userData.playerIndex, 1);
+
+        if (client.sessionId === this.state.ownerId && (this.state.players.length + this.state.spectators.length) > 0) {
+            if (this.state.started) {
+                this.state.ownerId = this.state.players[0].sessionId;
+            } else {
+                this.state.ownerId = this.state.spectators[0].sessionId;
+            }
+        }
+
+        this.updatePlayerIndices()
     }
 
     onDispose() {
@@ -269,15 +304,29 @@ export class GameRoom extends Room<GameRoomState> {
     }
 
     endTurn(ignoreRemainingTurns: boolean = false) {
-        if (!ignoreRemainingTurns && this.state.turnCount > 1) {
-            this.state.turnCount--;
+        this.state.turnCount++;
+        if (!ignoreRemainingTurns && this.state.turnRepeats > 1) {
+            this.state.turnRepeats--;
             return;
         }
-        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder) % this.state.numPlayers;
+        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder) % this.state.players.length;
     }
 
     isCatCard(card: number): boolean {
         return ([Card.TACOCAT, Card.BEARDCAT, Card.RAINBOWCAT, Card.CATTERMELON, Card.FERALCAT] as Array<number>).includes(card);
+    }
+
+    checkDeath(card: Card, client: Client) {
+        if (card === Card.IMPLODING) {
+            this.processDeath(card, client)
+            return true;
+        } else if (card === Card.EXPLODING) {
+            if (!this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(Card.DEFUSE), 1)) {
+                this.processDeath(card, client)
+                return true;
+            }
+        }
+        return false;
     }
 
     processDeath(card: Card, client: Client) {
@@ -310,6 +359,7 @@ export class GameRoom extends Room<GameRoomState> {
         const spectator = new LobbyPlayer();
         spectator.displayName = deadPlayer.displayName;
         this.state.spectators.push(spectator);
+        this.updatePlayerIndices();
 
         if (this.state.players.length === 1) {
             this.broadcast("gameEnd");
@@ -327,6 +377,17 @@ export class GameRoom extends Room<GameRoomState> {
             }
             this.state.noped = false;
         }, 3000);
+    }
+
+    updatePlayerIndices() {
+        for (const [index, player] of this.state.players.entries()) {
+            this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: true};
+        }
+
+        for (const [index, player] of this.state.spectators.entries()) {
+            console.log(player.sessionId, this.clients.getById(player.sessionId));
+            this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: true};
+        }
     }
 
 }
