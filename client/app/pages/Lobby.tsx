@@ -1,16 +1,17 @@
-import {useContext, useEffect, useState} from "react";
-import {DiscordSDKContext, lobbyManager} from "../utility/contexts";
-import {AuthResponse} from "../utility/util";
-import {DiscordSDK} from "@discord/embedded-app-sdk";
-import {Guild} from "@discord/embedded-app-sdk/output/schema/types";
+import {useContext, useEffect, useRef} from "react";
+import {DiscordSDKContext, gameManager, lobbyManager} from "../utility/contexts";
 import {LobbyRoomState} from "../../../server/src/rooms/schema/LobbyRoomState"
 import PlayerList from "../components/PlayerList";
 import SettingsList from "../components/SettingsList";
+import {GameRoomState} from "../../../server/src/rooms/schema/GameRoomState";
 
-export default function Lobby() {
+export default function Lobby({setInGame}: { setInGame: CallableFunction }) {
     let {auth, discordSDK} = useContext(DiscordSDKContext);
-    let [imageURL, setImageURL] = useState('');
-    let lobbyRoom = lobbyManager.useColyseusRoom()
+    let lobbyRoom = lobbyManager.useColyseusRoom();
+    let ownerId = lobbyManager.useColyseusState((state) => state.ownerId);
+
+    let numPlayers = useRef(0);
+    let gameSettings = useRef({ isImplodingEnabled: true, nopeQTEMode: true });
 
     useEffect(() => {
         async function setupRoom(): Promise<void> {
@@ -18,27 +19,55 @@ export default function Lobby() {
             const joinOptions = {
                 displayName: auth.user.global_name ?? auth.user.username
             }
+
+            let room;
             try {
-                await lobbyManager.setCurrentRoom(await lobbyManager.client.joinById<LobbyRoomState>(instanceId, joinOptions));
+                room = await lobbyManager.client.joinById<LobbyRoomState>(instanceId, joinOptions)
+                await lobbyManager.setCurrentRoom(room);
             } catch (e) {
-                await lobbyManager.setCurrentRoom(await lobbyManager.client.create<LobbyRoomState>("lobby_room", {instanceId: instanceId, ...joinOptions}));
+                room = await lobbyManager.client.create<LobbyRoomState>("lobby_room", {instanceId: instanceId, ...joinOptions})
+                await lobbyManager.setCurrentRoom(room);
             }
 
-            console.log("joined room")
+            room.state.players.onAdd(() => {
+                numPlayers.current += 1;
+                console.log("Number of Players updated to " + numPlayers.current);
+            });
+
+            room.state.players.onRemove(() => {
+                numPlayers.current -= 1;
+                console.log("Number of Players updated to " + numPlayers.current);
+            });
+
+            room.state.listen("isImplodingEnabled", (currentValue) => {
+                gameSettings.current.isImplodingEnabled = currentValue;
+            })
+
+            room.state.listen("nopeQTEMode", (currentValue) => {
+                gameSettings.current.nopeQTEMode = currentValue;
+            })
+
+            room.state.listen("started", (currentValue) => {
+                console.log("Game started!");
+                if (currentValue === true && ownerId !== room.sessionId) {
+                    gameManager.client.joinById<GameRoomState>(instanceId, joinOptions).then((room) => {
+                        gameManager.setCurrentRoom(room);
+                        lobbyRoom?.leave(true).then();
+                        setInGame(true);
+                    })
+                }
+            })
+
+            console.log("Joined room with instance id " + instanceId)
         }
 
         setupRoom().then();
 
         return () => {
+            lobbyRoom?.removeAllListeners();
             lobbyRoom?.leave(true).then();
         }
 
-    }, []);
-
-    useEffect(() => {
-        getGuildAvatar(auth, discordSDK).then((URL) => {
-            setImageURL(URL);
-        })
     }, []);
 
     return (
@@ -46,19 +75,27 @@ export default function Lobby() {
             {lobbyRoom ?
                 <div className={"flex flex-col place-items-center p-5 h-full"}>
                     <div className={"flex flex-row place-items-center h-full w-full"}>
-                        <SettingsList className={"justify-self-start border rounded-md p-4"}/>
-                        <div className={"flex-1 flex-grow flex flex-col h-full items-center justify-center"}>
-                            {imageURL ?
-                                <img src={imageURL} alt={"server icon"}
-                                     className={"rounded-3xl size-32 max-h-[128px]"}/>
-                                :
-                                null
-                            }
-                        </div>
+                        <SettingsList className={"justify-self-start border rounded-md p-4"} room={lobbyRoom}
+                                      ownerId={ownerId}/>
+                        <div className={"flex-1 flex-grow flex flex-col h-full items-center justify-center"}></div>
                         <PlayerList className={"justify-self-end border rounded-md p-4"}/>
                     </div>
                     <button
-                        className={"align-bottom py-1 px-4 text-white font-bold text-2xl bg-red-950 rounded-2xl hover:-translate-y-2 duration-75"}>Start!
+                        className={"align-bottom py-1 px-4 text-white font-bold text-2xl bg-red-950 rounded-2xl hover:-translate-y-2 duration-75 outline outline-2"}
+                        onClick={() => {
+                            gameManager.client.create<GameRoomState>("game_room", {
+                                displayName: auth.user.global_name ?? auth.user.username,
+                                instanceId: discordSDK.instanceId,
+                                ownerId: ownerId,
+                                numPlayers: numPlayers.current,
+                                ...gameSettings.current
+                            }).then(() => {
+                                lobbyRoom.send("start")
+                                lobbyRoom?.leave(true).then();
+                                setInGame(true);
+                            })
+                        }} disabled={false}
+                        title={lobbyRoom.sessionId === ownerId ? 'Start the game!' : 'Only the game owner may start the game.'}>Start!
                     </button>
                 </div>
                 :
@@ -66,17 +103,4 @@ export default function Lobby() {
             }
         </>
     )
-}
-
-async function getGuildAvatar(auth: AuthResponse, discordSDK: DiscordSDK) {
-    const guilds = await fetch(`https://discord.com/api/v10/users/@me/guilds`, {
-        headers: {
-            Authorization: `Bearer ${auth.access_token}`,
-            'Content-Type': 'application/json',
-        },
-    }).then((response) => response.json());
-
-    const currentGuild = guilds.find((g: Guild) => g.id === discordSDK.guildId);
-
-    return `https://cdn.discordapp.com/icons/${currentGuild.id}/${currentGuild.icon}.webp?size=128`
 }

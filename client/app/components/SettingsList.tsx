@@ -1,22 +1,22 @@
 import {HTMLAttributes} from "react";
 import {lobbyManager} from "../utility/contexts";
 import ReactSwitch from "react-switch";
+import {Room} from "colyseus.js";
 
-export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
-    let room = lobbyManager.useColyseusRoom()
+export default function SettingsList(props: HTMLAttributes<HTMLDivElement> & { room: Room, ownerId: string | undefined }) {
     let isImplodingEnabled = lobbyManager.useColyseusState((state) => state.isImplodingEnabled)
-    let ownerId = lobbyManager.useColyseusState((state) => state.ownerId)
-    if (isImplodingEnabled === undefined || ownerId === undefined) return;
+    if (isImplodingEnabled === undefined || props.ownerId === undefined) return;
 
-    if (!room) return;
-    let isOwner = room.sessionId === ownerId
+    if (!props.room) return;
+    let isOwner = props.room.sessionId === props.ownerId;
 
+    const {room, ownerId, ...divProps} = props;
 
     return (
-        <div {...props}>
+        <div {...divProps}>
             <label className={"text-white align-middle"}>Use Imploding Kittens?</label>
             <ReactSwitch checked={isImplodingEnabled} onChange={(checked) => {
-                room.send("changeSettings", {isImplodingEnabled: checked, nopeQTEMode: true})
+                props.room.send("changeSettings", {isImplodingEnabled: checked, nopeQTEMode: true})
             }} disabled={!isOwner} className={"align-middle ml-1 scale-75"} checkedIcon={false} uncheckedIcon={false}/>
         </div>
     )

@@ -32,7 +32,6 @@ export class GameRoom extends Room<GameRoomState> {
         this.state.nopeQTEMode = options.nopeQTEMode;
 
         const gameSize = Math.floor(this.state.numPlayers / 6) + 1
-        console.log(gameSize)
 
         this.state.deck.push(
             ...Array(4 * gameSize).fill(Card.TACOCAT),

@@ -10,9 +10,9 @@ export default function PlayerList(props: HTMLAttributes<HTMLDivElement>) {
             <ol>
                 {
                     players ?
-                        Array.from(players.keys()).map(playerId => (
-                            <li key={playerId}
-                                className={"text-white text-center"}>{players.get(playerId)?.displayName}</li>
+                        players.map(player => (
+                            <li key={player.sessionId}
+                                className={"text-white text-center"}>{player.displayName}</li>
                         ))
                         :
                         null
