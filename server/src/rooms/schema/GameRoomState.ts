@@ -2,6 +2,16 @@ import {Schema, CollectionSchema, type, filter} from "@colyseus/schema";
 import {Client} from "@colyseus/core";
 import {Card} from "../../../shared/card";
 
+export enum TurnState {
+    Normal,
+    AlteringTheFuture,
+    Favouring,
+    Noping,
+    ChoosingExplodingPosition,
+    ChoosingImplodingPosition
+}
+
+
 export class LobbyPlayer extends Schema {
 
   @type("string") displayName: string;
@@ -41,7 +51,7 @@ export class GameRoomState extends Schema {
     @type("number") turnCount: number = 0;
     @type("number") turnRepeats: number = 1;
     @type("number") turnOrder: number = 1;
-    @type("boolean") alteringTheFuture: boolean;
+    @type("number") turnState: TurnState;
     @type(["number"]) discard = new CollectionSchema<Card>();
 
     // Imploding kitten state

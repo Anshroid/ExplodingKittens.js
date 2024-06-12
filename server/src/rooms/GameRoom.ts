@@ -1,5 +1,5 @@
 import {Client, Room} from "@colyseus/core";
-import {LobbyPlayer, GamePlayer, GameRoomState} from "./schema/GameRoomState";
+import {GamePlayer, GameRoomState, LobbyPlayer, TurnState} from "./schema/GameRoomState";
 import {Card} from "../../shared/card";
 
 // https://stackoverflow.com/a/12646864/9094935
@@ -91,7 +91,7 @@ export class GameRoom extends Room<GameRoomState> {
 
         // Game messages
         this.onMessage("drawCard", (client) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
 
             let card = this.state.deck.shift();
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
@@ -101,10 +101,9 @@ export class GameRoom extends Room<GameRoomState> {
         })
 
         this.onMessage("playCard", (client, message: { card: Card, target?: number }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
-
-            this.state.players.at(this.state.turnIndex).cards.delete(message.card);
-            // TODO: Check if they actually have the card
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
+            if (!this.state.players.at(this.state.turnIndex).cards.delete(message.card)) return;
+            this.state.discard.add(message.card);
 
             this.processNopeQTE(() => {
                 switch (message.card) {
@@ -136,7 +135,7 @@ export class GameRoom extends Room<GameRoomState> {
                         break;
 
                     case Card.ALTERTHEFUTURE:
-                        this.state.alteringTheFuture = true;
+                        this.state.turnState = TurnState.AlteringTheFuture;
                     // noinspection FallThroughInSwitchStatementJS
                     case Card.SEETHEFUTURE:
                         client.send("theFuture", {cards: this.state.deck.slice(0, 3)});
@@ -148,6 +147,7 @@ export class GameRoom extends Room<GameRoomState> {
                         break;
 
                     case Card.FAVOUR:
+                        this.state.turnState = TurnState.Favouring;
                         this.clients.getById(this.state.players.at(message.target).sessionId).send("favourRequest");
                         break;
 
@@ -165,19 +165,19 @@ export class GameRoom extends Room<GameRoomState> {
             targetCard?: Card,
             targetIndex?: number
         }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
 
-            // TODO: check if user has enough cards
             for (const card of message.cards) {
-                this.state.players.at(this.state.turnIndex).cards.delete(card);
+                if (!this.state.players.at(this.state.turnIndex).cards.delete(card)) return;
+                this.state.discard.add(card);
             }
 
             this.processNopeQTE(() => {
                 switch (message.cards.length) {
                     case 2:
-                        // TODO: check if target player has enough cards
-
                         if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => this.isCatCard(c)))) {
+                            if (this.state.players.at(this.state.turnIndex).cards.size > 0) return;
+
                             let stealIndex = ~~(Math.random() * this.state.players.at(message.target).cards.size);
                             let stolenCard = this.state.players.at(message.target).cards.at(stealIndex);
                             this.state.players.at(this.state.turnIndex).cards.delete(stolenCard)
@@ -225,34 +225,37 @@ export class GameRoom extends Room<GameRoomState> {
         });
 
         this.onMessage("alterTheFuture", (client, message: { cards: Array<Card> }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.AlteringTheFuture) return;
 
             this.state.deck.splice(0, 3, ...message.cards);
         });
 
         this.onMessage("nope", () => {
+            if (this.state.turnState !== TurnState.Noping) return;
+
             this.state.nopeTimeout.refresh();
             this.state.noped = !this.state.noped;
         });
 
         this.onMessage("favourResponse", (client, message: { card: Card }) => {
-            if (!this.state.players.at(client.userData.playerIndex).cards.has(message.card)) {
+            if (this.state.turnState !== TurnState.Favouring) return;
+
+            if (!this.state.players.at(client.userData.playerIndex).cards.delete(message.card)) {
                 console.log("Invalid card!");
                 return;
             }
 
-            this.state.players.at(client.userData.playerIndex).cards.delete(message.card);
             this.state.players.at(this.state.turnIndex).cards.add(message.card);
         });
 
         this.onMessage("chooseExplodingPositionResponse", (client, message: { index: number }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.ChoosingExplodingPosition) return;
 
             this.state.deck.splice(message.index, 0, Card.EXPLODING)
         });
 
         this.onMessage("chooseImplodingPositionResponse", (client, message: { index: number }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.ChoosingImplodingPosition) return;
 
             this.state.deck.splice(message.index, 0, Card.IMPLODING)
         });
@@ -364,11 +367,14 @@ export class GameRoom extends Room<GameRoomState> {
             return;
         }
 
+        this.state.turnState = TurnState.Noping;
+
         this.state.nopeTimeout = setTimeout(() => {
             if (!this.state.noped) {
                 callback()
             }
             this.state.noped = false;
+            this.state.turnState = TurnState.Normal;
         }, 3000);
     }
 
