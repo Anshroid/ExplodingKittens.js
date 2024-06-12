@@ -1,4 +1,4 @@
-import {Schema, ArraySchema, type, filter} from "@colyseus/schema";
+import {Schema, CollectionSchema, type, filter} from "@colyseus/schema";
 import {Client} from "@colyseus/core";
 import {Card} from "../../../shared/card";
 
@@ -20,7 +20,7 @@ export class GamePlayer extends Schema {
     ) {
         return this.sessionId === client.sessionId;
     })
-    @type(["number"]) cards = new ArraySchema<Card>();
+    @type(["number"]) cards = new CollectionSchema<Card>();
 
 }
 
@@ -29,8 +29,8 @@ export class GameRoomState extends Schema {
     // Functional properties
     @type("string") ownerId: string;
     @type("boolean") started: boolean = false;
-    @type([GamePlayer]) players = new ArraySchema<GamePlayer>();
-    @type([LobbyPlayer]) spectators = new ArraySchema<LobbyPlayer>();
+    @type([GamePlayer]) players = new CollectionSchema<GamePlayer>();
+    @type([LobbyPlayer]) spectators = new CollectionSchema<LobbyPlayer>();
 
     // Game Settings
     @type("boolean") isImplodingEnabled = true;
@@ -42,7 +42,7 @@ export class GameRoomState extends Schema {
     @type("number") turnRepeats: number = 1;
     @type("number") turnOrder: number = 1;
     @type("boolean") alteringTheFuture: boolean;
-    @type(["number"]) discard = new ArraySchema<Card>();
+    @type(["number"]) discard = new CollectionSchema<Card>();
 
     // Imploding kitten state
     @type("boolean") implosionRevealed: boolean = false;
@@ -67,7 +67,6 @@ export class GameRoomState extends Schema {
 
     // Private properties
     nopeTimeout: ReturnType<typeof setTimeout>;
-
-    @type(["number"]) deck = new ArraySchema<Card>();
+    deck = new Array<Card>();
     noped = false;
 }

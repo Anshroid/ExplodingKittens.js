@@ -27,13 +27,13 @@ export class GameRoom extends Room<GameRoomState> {
         });
 
         this.onMessage("start", (client) => {
-            if (this.state.ownerId !== client.sessionId || this.state.started || this.state.spectators.length < 2) {
+            if (this.state.ownerId !== client.sessionId || this.state.started || this.state.spectators.size < 2) {
                 return;
             }
 
             this.state.started = true;
 
-            const gameSize = Math.floor(this.state.spectators.length / 6) + 1
+            const gameSize = Math.floor(this.state.spectators.size / 6) + 1
 
             this.state.deck.push(
                 ...Array(4 * gameSize).fill(Card.TACOCAT),
@@ -61,23 +61,27 @@ export class GameRoom extends Room<GameRoomState> {
 
             shuffleArray(this.state.deck);
 
-            for (const spectator of this.state.spectators) {
+            this.state.spectators.forEach((spectator) => {
                 const player = new GamePlayer();
                 player.sessionId = spectator.sessionId;
                 player.displayName = spectator.displayName;
-                player.cards.push(...this.state.deck.splice(0, 4), Card.DEFUSE); // Draw four cards from deck and a defuse card
+                
+                this.state.deck.splice(0, 4).forEach((card) => {
+                    player.cards.add(card); // Draw four cards from deck and a defuse card
+                })
+                player.cards.add(Card.DEFUSE)
 
-                this.state.players.push(player);
+                this.state.players.add(player);
 
                 this.clients.getById(spectator.sessionId).userData.isSpectator = false;
-            }
+            })
 
             this.state.spectators.clear();
 
             this.state.deck.push(
-                ...Array(this.state.players.length - 2).fill(Card.EXPLODING),
+                ...Array(this.state.players.size - 2).fill(Card.EXPLODING),
                 this.state.isImplodingEnabled ? Card.IMPLODING : Card.EXPLODING,
-                ...Array((gameSize * 6) - this.state.players.length).fill(Card.DEFUSE)
+                ...Array((gameSize * 6) - this.state.players.size).fill(Card.DEFUSE)
             );
 
             shuffleArray(this.state.deck);
@@ -92,14 +96,14 @@ export class GameRoom extends Room<GameRoomState> {
             let card = this.state.deck.shift();
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
             if (this.checkDeath(card, client)) return;
-            this.state.players[this.state.turnIndex].cards.push(card);
+            this.state.players.at(this.state.turnIndex).cards.add(card);
             this.endTurn();
         })
 
         this.onMessage("playCard", (client, message: { card: Card, target?: number }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
 
-            this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(message.card), 1);
+            this.state.players.at(this.state.turnIndex).cards.delete(message.card);
             // TODO: Check if they actually have the card
 
             this.processNopeQTE(() => {
@@ -127,7 +131,7 @@ export class GameRoom extends Room<GameRoomState> {
                         let card = this.state.deck.pop();
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
                         if (this.checkDeath(card, client)) return;
-                        this.state.players[this.state.turnIndex].cards.push(card);
+                        this.state.players.at(this.state.turnIndex).cards.add(card);
                         this.endTurn();
                         break;
 
@@ -144,7 +148,7 @@ export class GameRoom extends Room<GameRoomState> {
                         break;
 
                     case Card.FAVOUR:
-                        this.clients.getById(this.state.players[message.target].sessionId).send("favourRequest");
+                        this.clients.getById(this.state.players.at(message.target).sessionId).send("favourRequest");
                         break;
 
                     default:
@@ -165,7 +169,7 @@ export class GameRoom extends Room<GameRoomState> {
 
             // TODO: check if user has enough cards
             for (const card of message.cards) {
-                this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(card), 1);
+                this.state.players.at(this.state.turnIndex).cards.delete(card);
             }
 
             this.processNopeQTE(() => {
@@ -174,8 +178,10 @@ export class GameRoom extends Room<GameRoomState> {
                         // TODO: check if target player has enough cards
 
                         if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => this.isCatCard(c)))) {
-                            let stealIndex = ~~(Math.random() * this.state.players[message.target].cards.length);
-                            this.state.players[this.state.turnIndex].cards.push(this.state.players[message.target].cards.splice(stealIndex)[0]);
+                            let stealIndex = ~~(Math.random() * this.state.players.at(message.target).cards.size);
+                            let stolenCard = this.state.players.at(message.target).cards.at(stealIndex);
+                            this.state.players.at(this.state.turnIndex).cards.delete(stolenCard)
+                            this.state.players.at(this.state.turnIndex).cards.add(stolenCard);
                             break;
                         }
 
@@ -184,13 +190,11 @@ export class GameRoom extends Room<GameRoomState> {
 
                     case 3:
                         if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => this.isCatCard(c)) && new Set(message.cards).size === 2)) {
-                            let foundIndex;
-                            if ((foundIndex = this.state.players[message.target].cards.indexOf(message.targetCard)) === -1) {
+                            if (!this.state.players.at(message.target).cards.delete(message.targetCard)) {
                                 client.send("comboFail");
                             }
 
-                            this.state.players[message.target].cards.splice(foundIndex, 1)
-                            this.state.players[this.state.turnIndex].cards.push(message.targetCard);
+                            this.state.players.at(this.state.turnIndex).cards.add(message.targetCard);
                             break;
                         }
 
@@ -203,12 +207,14 @@ export class GameRoom extends Room<GameRoomState> {
                             break;
                         }
 
-                        if (message.targetIndex >= this.state.discard.length) {
+                        if (message.targetIndex >= this.state.discard.size) {
                             console.log("Invalid choice!");
                             break;
                         }
 
-                        this.state.players[this.state.turnIndex].cards.push(this.state.discard.splice(message.targetIndex, 1)[0]);
+                        let card = this.state.discard.at(message.targetIndex)
+                        this.state.discard.delete(card);
+                        this.state.players.at(this.state.turnIndex).cards.add(card);
                         break;
 
                     default:
@@ -230,13 +236,13 @@ export class GameRoom extends Room<GameRoomState> {
         });
 
         this.onMessage("favourResponse", (client, message: { card: Card }) => {
-            if (!this.state.players[client.userData.playerIndex].cards.includes(message.card)) {
+            if (!this.state.players.at(client.userData.playerIndex).cards.has(message.card)) {
                 console.log("Invalid card!");
                 return;
             }
 
-            this.state.players[client.userData.playerIndex].cards.splice(this.state.players[client.userData.playerIndex].cards.indexOf(message.card));
-            this.state.players[this.state.turnIndex].cards.push(message.card);
+            this.state.players.at(client.userData.playerIndex).cards.delete(message.card);
+            this.state.players.at(this.state.turnIndex).cards.add(message.card);
         });
 
         this.onMessage("chooseExplodingPositionResponse", (client, message: { index: number }) => {
@@ -248,12 +254,7 @@ export class GameRoom extends Room<GameRoomState> {
         this.onMessage("chooseImplodingPositionResponse", (client, message: { index: number }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
 
-            // TODO: fix
-            console.log(this.state.deck)
-            this.state.deck.splice(0, 0, Card.IMPLODING)
-
-            console.log(this.state.deck[0]);
-
+            this.state.deck.splice(message.index, 0, Card.IMPLODING)
         });
     }
 
@@ -268,9 +269,9 @@ export class GameRoom extends Room<GameRoomState> {
         player.displayName = options.displayName;
         player.sessionId = client.sessionId;
 
-        client.userData = {playerIndex: this.state.spectators.length, isSpectator: true};
+        client.userData = {playerIndex: this.state.spectators.size, isSpectator: true};
 
-        this.state.spectators.push(player);
+        this.state.spectators.add(player);
     }
 
     onLeave(client: Client, consented: boolean) {
@@ -279,20 +280,22 @@ export class GameRoom extends Room<GameRoomState> {
         if (this.state.started) {
             if (!consented) return;
 
-            this.state.discard.push(...this.state.players[client.userData.playerIndex].cards);
+            this.state.players.at(client.userData.playerIndex).cards.forEach((card) => {
+                this.state.discard.add(card);
+            })
         }
 
         if (client.userData.isSpectator) {
-            this.state.spectators.splice(client.userData.playerIndex, 1);
+            this.state.spectators.delete(this.state.spectators.at(client.userData.playerIndex));
         } else {
-            this.state.players.splice(client.userData.playerIndex, 1);
+            this.state.players.delete(this.state.players.at(client.userData.playerIndex));
         }
 
-        if (client.sessionId === this.state.ownerId && (this.state.players.length + this.state.spectators.length) > 0) {
+        if (client.sessionId === this.state.ownerId && (this.state.players.size + this.state.spectators.size) > 0) {
             if (this.state.started) {
-                this.state.ownerId = this.state.players[0].sessionId;
+                this.state.ownerId = this.state.players.at(0).sessionId;
             } else {
-                this.state.ownerId = this.state.spectators[0].sessionId;
+                this.state.ownerId = this.state.spectators.at(0).sessionId;
             }
         }
 
@@ -309,7 +312,7 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.turnRepeats--;
             return;
         }
-        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder) % this.state.players.length;
+        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder) % this.state.players.size;
     }
 
     isCatCard(card: number): boolean {
@@ -318,50 +321,40 @@ export class GameRoom extends Room<GameRoomState> {
 
     checkDeath(card: Card, client: Client) {
         if (card === Card.IMPLODING) {
-            this.processDeath(card, client)
-            return true;
-        } else if (card === Card.EXPLODING) {
-            if (!this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(Card.DEFUSE), 1)) {
-                this.processDeath(card, client)
-                return true;
-            }
-        }
-        return false;
-    }
-
-    processDeath(card: Card, client: Client) {
-        if (card === Card.EXPLODING) {
-            if (this.state.players[this.state.turnIndex].cards.includes(Card.DEFUSE)) {
-                this.broadcast("defused");
-                this.state.players[this.state.turnIndex].cards.splice(this.state.players[this.state.turnIndex].cards.indexOf(Card.DEFUSE), 1);
-                client.send("chooseExplodingPosition");
-                return;
-            }
-
-            this.killPlayer(this.state.turnIndex);
-            this.state.turnRepeats = 1; // Make sure next player only has one turn
-            return; // Pass turn to next alive player by keeping index the same
-        } else if (card === Card.IMPLODING) {
             if (!this.state.implosionRevealed) {
                 this.state.implosionRevealed = true;
                 client.send("chooseImplodingPosition")
             } else {
                 this.killPlayer(this.state.turnIndex)
-                return;
+                return true;
+            }
+        } else if (card === Card.EXPLODING) {
+            if (!this.state.players.at(this.state.turnIndex).cards.delete(Card.DEFUSE)) {
+                this.killPlayer(this.state.turnIndex);
+                this.state.turnRepeats = 1; // Make sure next player only has one turn
+                return true; // Pass turn to next alive player by keeping index the same
+            } else {
+                this.broadcast("defused");
+                client.send("chooseExplodingPosition");
             }
         }
-        return;
+        return false;
     }
 
     killPlayer(index: number) {
-        this.state.discard.push(...this.state.players[index].cards)
-        const deadPlayer = this.state.players.splice(index, 1)[0]
+        this.state.players.at(index).cards.forEach((card) => {
+            this.state.discard.add(card)
+        })
+
+        const deadPlayer = this.state.players.at(index)
+        this.state.players.delete(deadPlayer);
+
         const spectator = new LobbyPlayer();
         spectator.displayName = deadPlayer.displayName;
-        this.state.spectators.push(spectator);
+        this.state.spectators.add(spectator);
         this.updatePlayerIndices();
 
-        if (this.state.players.length === 1) {
+        if (this.state.players.size === 1) {
             this.broadcast("gameEnd");
         }
     }
