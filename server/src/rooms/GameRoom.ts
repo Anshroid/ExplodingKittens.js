@@ -1,6 +1,7 @@
 import {Client, Room} from "@colyseus/core";
 import {GamePlayer, GameRoomState, LobbyPlayer, TurnState} from "./schema/GameRoomState";
-import {Card} from "../../shared/card";
+import {Card, CardNames} from "../../shared/card";
+import {isCatCard} from "../../shared/util";
 
 // https://stackoverflow.com/a/12646864/9094935
 function shuffleArray(array: Array<any>) {
@@ -18,6 +19,8 @@ export class GameRoom extends Room<GameRoomState> {
         this.setPrivate(true).then();
         this.roomId = options.instanceId;
 
+        this.log("initialised!")
+
         // Lobby messages
         this.onMessage("changeSettings", (client, message) => {
             if (this.state.ownerId === client.sessionId && !this.state.started) {
@@ -27,13 +30,13 @@ export class GameRoom extends Room<GameRoomState> {
         });
 
         this.onMessage("start", (client) => {
-            if (this.state.ownerId !== client.sessionId || this.state.started || this.state.spectators.size < 2) {
+            if (this.state.ownerId !== client.sessionId || this.state.started || this.state.spectators.length < 2) {
                 return;
             }
 
             this.state.started = true;
 
-            const gameSize = Math.floor(this.state.spectators.size / 6) + 1
+            const gameSize = Math.floor(this.state.spectators.length / 6) + 1
 
             this.state.deck.push(
                 ...Array(4 * gameSize).fill(Card.TACOCAT),
@@ -65,28 +68,26 @@ export class GameRoom extends Room<GameRoomState> {
                 const player = new GamePlayer();
                 player.sessionId = spectator.sessionId;
                 player.displayName = spectator.displayName;
-                
-                this.state.deck.splice(0, 4).forEach((card) => {
-                    player.cards.add(card); // Draw four cards from deck and a defuse card
-                })
-                player.cards.add(Card.DEFUSE)
 
-                this.state.players.add(player);
+                player.cards.push(...this.state.deck.splice(0, 4), Card.DEFUSE);
 
-                this.clients.getById(spectator.sessionId).userData.isSpectator = false;
+                this.state.players.push(player);
             })
 
             this.state.spectators.clear();
+            this.updatePlayerIndices();
 
             this.state.deck.push(
-                ...Array(this.state.players.size - 2).fill(Card.EXPLODING),
+                ...Array(this.state.players.length - 2).fill(Card.EXPLODING),
                 this.state.isImplodingEnabled ? Card.IMPLODING : Card.EXPLODING,
-                ...Array((gameSize * 6) - this.state.players.size).fill(Card.DEFUSE)
+                ...Array((gameSize * 6) - this.state.players.length).fill(Card.DEFUSE)
             );
 
             shuffleArray(this.state.deck);
 
             this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
+
+            this.log("Game started!")
         });
 
         // Game messages
@@ -96,19 +97,28 @@ export class GameRoom extends Room<GameRoomState> {
             let card = this.state.deck.shift();
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
             if (this.checkDeath(card, client)) return;
-            this.state.players.at(this.state.turnIndex).cards.add(card);
+            this.state.players.at(this.state.turnIndex).cards.push(card);
             this.endTurn();
         })
 
         this.onMessage("playCard", (client, message: { card: Card, target?: number }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
-            if (!this.state.players.at(this.state.turnIndex).cards.delete(message.card)) return;
-            this.state.discard.add(message.card);
+            if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players[this.state.turnIndex].cards.indexOf(message.card))) return;
 
+            this.log("Player " + client.sessionId + " playing " + CardNames.get(message.card) + " target " + message.target);
+
+            this.state.discard.push(message.card);
+
+            // TODO: do they know what's happened?
             this.processNopeQTE(() => {
                 switch (message.card) {
                     case Card.ATTACK:
-                        this.state.turnRepeats += 2;
+                        if (this.state.attacked) {
+                            this.state.turnRepeats += 2;
+                        } else {
+                            this.state.turnRepeats = 2;
+                        }
+                        this.state.attacked = true;
                         this.endTurn(true);
                         break;
 
@@ -130,7 +140,7 @@ export class GameRoom extends Room<GameRoomState> {
                         let card = this.state.deck.pop();
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
                         if (this.checkDeath(card, client)) return;
-                        this.state.players.at(this.state.turnIndex).cards.add(card);
+                        this.state.players.at(this.state.turnIndex).cards.push(card);
                         this.endTurn();
                         break;
 
@@ -142,7 +152,12 @@ export class GameRoom extends Room<GameRoomState> {
                         break;
 
                     case Card.TARGETEDATTACK:
-                        this.state.turnRepeats += 2;
+                        if (this.state.attacked) {
+                            this.state.turnRepeats += 2;
+                        } else {
+                            this.state.turnRepeats = 2;
+                        }
+                        this.state.attacked = true;
                         this.state.turnIndex = message.target;
                         break;
 
@@ -152,7 +167,7 @@ export class GameRoom extends Room<GameRoomState> {
                         break;
 
                     default:
-                        console.log("Invalid card!");
+                        this.log("Invalid card!");
                         return;
 
                 }
@@ -168,57 +183,59 @@ export class GameRoom extends Room<GameRoomState> {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
 
             for (const card of message.cards) {
-                if (!this.state.players.at(this.state.turnIndex).cards.delete(card)) return;
-                this.state.discard.add(card);
+                if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(card))) return;
+                this.state.discard.push(card);
             }
+
+            this.log("Player " + client.sessionId + " playing " + message.cards.map(card => CardNames.get(card)) + " target " + message.target);
 
             this.processNopeQTE(() => {
                 switch (message.cards.length) {
                     case 2:
-                        if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => this.isCatCard(c)))) {
-                            if (this.state.players.at(this.state.turnIndex).cards.size > 0) return;
+                        if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => isCatCard(c)))) {
+                            if (this.state.players.at(this.state.turnIndex).cards.length > 0) return;
 
-                            let stealIndex = ~~(Math.random() * this.state.players.at(message.target).cards.size);
-                            let stolenCard = this.state.players.at(message.target).cards.at(stealIndex);
-                            this.state.players.at(this.state.turnIndex).cards.delete(stolenCard)
-                            this.state.players.at(this.state.turnIndex).cards.add(stolenCard);
+                            let stealIndex = ~~(Math.random() * this.state.players.at(message.target).cards.length);
+                            let stolenCard = this.state.players.at(this.state.turnIndex).cards.splice(stealIndex, 1)[0];
+                            this.state.players.at(this.state.turnIndex).cards.push(stolenCard);
                             break;
                         }
 
-                        console.log("Invalid combo!");
+                        this.log("Invalid combo!");
                         break;
 
                     case 3:
-                        if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => this.isCatCard(c)) && new Set(message.cards).size === 2)) {
-                            if (!this.state.players.at(message.target).cards.delete(message.targetCard)) {
+                        if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => isCatCard(c)) && new Set(message.cards).size === 2)) {
+                            if (!this.state.players.at(message.target).cards.deleteAt(this.state.players.at(message.target).cards.indexOf(message.targetCard))) {
                                 client.send("comboFail");
+                                break;
                             }
 
-                            this.state.players.at(this.state.turnIndex).cards.add(message.targetCard);
+                            this.state.players.at(this.state.turnIndex).cards.push(message.targetCard);
                             break;
                         }
 
-                        console.log("Invalid combo!");
+                        this.log("Invalid combo!");
                         break;
 
                     case 5:
                         if (new Set(message.cards).size !== 5) {
-                            console.log("Invalid combo!");
+                            this.log("Invalid combo!");
                             break;
                         }
 
-                        if (message.targetIndex >= this.state.discard.size) {
-                            console.log("Invalid choice!");
+                        if (message.targetIndex >= this.state.discard.length) {
+                            this.log("Invalid choice!");
                             break;
                         }
 
                         let card = this.state.discard.at(message.targetIndex)
-                        this.state.discard.delete(card);
-                        this.state.players.at(this.state.turnIndex).cards.add(card);
+                        this.state.discard.deleteAt(this.state.discard.indexOf(card));
+                        this.state.players.at(this.state.turnIndex).cards.push(card);
                         break;
 
                     default:
-                        console.log("Invalid combo!");
+                        this.log("Invalid combo!");
                         break;
                 }
             })
@@ -228,6 +245,7 @@ export class GameRoom extends Room<GameRoomState> {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.AlteringTheFuture) return;
 
             this.state.deck.splice(0, 3, ...message.cards);
+            this.state.turnState = TurnState.AlteringTheFuture;
         });
 
         this.onMessage("nope", () => {
@@ -240,29 +258,49 @@ export class GameRoom extends Room<GameRoomState> {
         this.onMessage("favourResponse", (client, message: { card: Card }) => {
             if (this.state.turnState !== TurnState.Favouring) return;
 
-            if (!this.state.players.at(client.userData.playerIndex).cards.delete(message.card)) {
-                console.log("Invalid card!");
+            if (!this.state.players.at(client.userData.playerIndex).cards.deleteAt(this.state.players.at(client.userData.playerIndex).cards.indexOf(message.card))) {
+                this.log("Invalid card!");
                 return;
             }
 
-            this.state.players.at(this.state.turnIndex).cards.add(message.card);
+            this.state.players.at(this.state.turnIndex).cards.push(message.card);
+            this.state.turnState = TurnState.Normal;
         });
 
-        this.onMessage("chooseExplodingPositionResponse", (client, message: { index: number }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.ChoosingExplodingPosition) return;
+        this.onMessage("choosePosition", (client, message: { index: number }) => {
+            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
+            if (![TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(this.state.turnState)) return;
 
-            this.state.deck.splice(message.index, 0, Card.EXPLODING)
-        });
+            this.state.deck.splice(message.index, 0, this.state.turnState === TurnState.ChoosingImplodingPosition ? Card.IMPLODING : Card.EXPLODING);
 
-        this.onMessage("chooseImplodingPositionResponse", (client, message: { index: number }) => {
-            if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.ChoosingImplodingPosition) return;
+            this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
+            this.state.turnState = TurnState.Normal;
+            this.endTurn();
+        })
 
-            this.state.deck.splice(message.index, 0, Card.IMPLODING)
-        });
+        this.onMessage("returnToLobby", (client) => {
+            if (!this.state.started || client.sessionId !== this.state.ownerId || this.state.turnState !== TurnState.GameOver) return;
+
+            const oldPlayer = this.state.players.splice(0, 1)[0];
+            const spectator = new LobbyPlayer();
+            spectator.sessionId = oldPlayer.sessionId;
+            spectator.displayName = oldPlayer.displayName;
+            this.state.spectators.push(spectator);
+            this.updatePlayerIndices();
+
+            this.state.started = false;
+            this.state.deck = [];
+            this.state.turnIndex = 0;
+            this.state.turnCount = 0;
+            this.state.turnRepeats = 1;
+            this.state.turnOrder = 1;
+            this.state.discard.clear();
+            this.state.implosionRevealed = false;
+        })
     }
 
     onJoin(client: Client, options: { displayName: string }) {
-        console.log(client.sessionId, "joined!");
+        this.log(client.sessionId + " joined!");
 
         if (!this.state.ownerId) {
             this.state.ownerId = client.sessionId;
@@ -272,29 +310,29 @@ export class GameRoom extends Room<GameRoomState> {
         player.displayName = options.displayName;
         player.sessionId = client.sessionId;
 
-        client.userData = {playerIndex: this.state.spectators.size, isSpectator: true};
+        client.userData = {playerIndex: this.state.spectators.length, isSpectator: true};
 
-        this.state.spectators.add(player);
+        this.state.spectators.push(player);
     }
 
     onLeave(client: Client, consented: boolean) {
-        console.log(client.sessionId, "left!");
+        this.log(client.sessionId + " left!");
 
         if (this.state.started) {
             if (!consented) return;
 
             this.state.players.at(client.userData.playerIndex).cards.forEach((card) => {
-                this.state.discard.add(card);
+                this.state.discard.push(card);
             })
         }
 
         if (client.userData.isSpectator) {
-            this.state.spectators.delete(this.state.spectators.at(client.userData.playerIndex));
+            this.state.spectators.deleteAt(client.userData.playerIndex);
         } else {
-            this.state.players.delete(this.state.players.at(client.userData.playerIndex));
+            this.state.players.deleteAt(client.userData.playerIndex);
         }
 
-        if (client.sessionId === this.state.ownerId && (this.state.players.size + this.state.spectators.size) > 0) {
+        if (client.sessionId === this.state.ownerId && (this.state.players.length + this.state.spectators.length) > 0) {
             if (this.state.started) {
                 this.state.ownerId = this.state.players.at(0).sessionId;
             } else {
@@ -306,58 +344,63 @@ export class GameRoom extends Room<GameRoomState> {
     }
 
     onDispose() {
-        console.log("room", this.roomId, "disposing...");
+        this.log("room " + this.roomId + " disposing...");
     }
 
     endTurn(ignoreRemainingTurns: boolean = false) {
         this.state.turnCount++;
-        if (!ignoreRemainingTurns && this.state.turnRepeats > 1) {
-            this.state.turnRepeats--;
-            return;
+        if (!ignoreRemainingTurns) {
+            if (this.state.turnRepeats > 1) { // Normal turn, attacked
+                this.state.turnRepeats--;
+                return;
+            } else { // Normal turn including end of attack
+                this.state.attacked = false;
+            }
         }
-        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder) % this.state.players.size;
+        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder + this.state.players.length) % this.state.players.length; // Cycle turns, js uses -1 % n = -1, so we must add n to make it positive
     }
 
-    isCatCard(card: number): boolean {
-        return ([Card.TACOCAT, Card.BEARDCAT, Card.RAINBOWCAT, Card.CATTERMELON, Card.FERALCAT] as Array<number>).includes(card);
-    }
-
-    checkDeath(card: Card, client: Client) {
+    checkDeath(card: Card, _: Client) {
         if (card === Card.IMPLODING) {
             if (!this.state.implosionRevealed) {
                 this.state.implosionRevealed = true;
-                client.send("chooseImplodingPosition")
+                this.state.turnState = TurnState.ChoosingImplodingPosition
             } else {
                 this.killPlayer(this.state.turnIndex)
-                return true;
             }
+            return true; // Don't end turn, wait for the response
         } else if (card === Card.EXPLODING) {
-            if (!this.state.players.at(this.state.turnIndex).cards.delete(Card.DEFUSE)) {
+            if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
                 this.killPlayer(this.state.turnIndex);
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 return true; // Pass turn to next alive player by keeping index the same
             } else {
                 this.broadcast("defused");
-                client.send("chooseExplodingPosition");
+                this.state.turnState = TurnState.ChoosingExplodingPosition
             }
+            return true; // Don't end turn, wait for the response
         }
         return false;
     }
 
     killPlayer(index: number) {
         this.state.players.at(index).cards.forEach((card) => {
-            this.state.discard.add(card)
+            this.state.discard.push(card)
         })
 
+        this.state.attacked = false;
+
         const deadPlayer = this.state.players.at(index)
-        this.state.players.delete(deadPlayer);
+        this.state.players.deleteAt(index);
 
         const spectator = new LobbyPlayer();
+        spectator.sessionId = deadPlayer.sessionId;
         spectator.displayName = deadPlayer.displayName;
-        this.state.spectators.add(spectator);
+        this.state.spectators.push(spectator);
         this.updatePlayerIndices();
 
-        if (this.state.players.size === 1) {
+        if (this.state.players.length === 1) {
+            this.state.turnState = TurnState.GameOver;
             this.broadcast("gameEnd");
         }
     }
@@ -379,14 +422,19 @@ export class GameRoom extends Room<GameRoomState> {
     }
 
     updatePlayerIndices() {
-        for (const [index, player] of this.state.players.entries()) {
-            this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: true};
+        for (const [index, player] of this.state.players.toArray().entries()) {
+            this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: false};
+            this.state.playerIndexMap.set(player.sessionId, index);
         }
 
-        for (const [index, player] of this.state.spectators.entries()) {
-            console.log(player.sessionId, this.clients.getById(player.sessionId));
+        for (const [index, player] of this.state.spectators.toArray().entries()) {
             this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: true};
+            this.state.playerIndexMap.set(player.sessionId, -1);
         }
+    }
+
+    log(message: string) {
+        console.log("[" + this.roomId + "] " + message)
     }
 
 }

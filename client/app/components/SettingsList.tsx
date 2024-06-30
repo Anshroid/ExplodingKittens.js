@@ -13,8 +13,8 @@ export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
 
     return (
         <div {...props}>
-            <h2 className={"text-white font-bold underline"}></h2>
-            <label className={"text-white align-middle"}>Use Imploding Kittens?</label>
+            <h2 className={"font-bold underline"}></h2>
+            <label className={"align-middle"}>Use Imploding Kittens?</label>
             <ReactSwitch checked={isImplodingEnabled} onChange={(checked) => {
                 room.send("changeSettings", {isImplodingEnabled: checked, nopeQTEMode: true})
             }} disabled={!isOwner} className={"align-middle ml-1 scale-75"} checkedIcon={false} uncheckedIcon={false}/>

@@ -1,4 +1,4 @@
-import {Schema, CollectionSchema, type, filter} from "@colyseus/schema";
+import {Schema, MapSchema, ArraySchema, type, filter} from "@colyseus/schema";
 import {Client} from "@colyseus/core";
 import {Card} from "../../../shared/card";
 
@@ -8,7 +8,8 @@ export enum TurnState {
     Favouring,
     Noping,
     ChoosingExplodingPosition,
-    ChoosingImplodingPosition
+    ChoosingImplodingPosition,
+    GameOver
 }
 
 
@@ -30,7 +31,7 @@ export class GamePlayer extends Schema {
     ) {
         return this.sessionId === client.sessionId;
     })
-    @type(["number"]) cards = new CollectionSchema<Card>();
+    @type(["number"]) cards = new ArraySchema<Card>();
 
 }
 
@@ -39,8 +40,9 @@ export class GameRoomState extends Schema {
     // Functional properties
     @type("string") ownerId: string;
     @type("boolean") started: boolean = false;
-    @type([GamePlayer]) players = new CollectionSchema<GamePlayer>();
-    @type([LobbyPlayer]) spectators = new CollectionSchema<LobbyPlayer>();
+    @type([GamePlayer]) players = new ArraySchema<GamePlayer>();
+    @type([LobbyPlayer]) spectators = new ArraySchema<LobbyPlayer>();
+    @type({ map: "number" }) playerIndexMap = new MapSchema<number>();
 
     // Game Settings
     @type("boolean") isImplodingEnabled = true;
@@ -51,13 +53,14 @@ export class GameRoomState extends Schema {
     @type("number") turnCount: number = 0;
     @type("number") turnRepeats: number = 1;
     @type("number") turnOrder: number = 1;
-    @type("number") turnState: TurnState;
-    @type(["number"]) discard = new CollectionSchema<Card>();
+    @type("number") turnState: TurnState = TurnState.Normal;
+    @type(["number"]) discard = new ArraySchema<Card>();
 
     // Imploding kitten state
     @type("boolean") implosionRevealed: boolean = false;
     @filter(function (
         this: GameRoomState,
+        _: Client,
         value: number,
     ) {
         return this.implosionRevealed && value < 10;
@@ -79,4 +82,5 @@ export class GameRoomState extends Schema {
     nopeTimeout: ReturnType<typeof setTimeout>;
     deck = new Array<Card>();
     noped = false;
+    attacked = false;
 }

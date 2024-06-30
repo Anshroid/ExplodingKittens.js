@@ -1,4 +1,4 @@
-import {AuthResponse} from "./util";
+import {AuthResponse} from "./discord_sdk";
 import {DiscordSDK} from "@discord/embedded-app-sdk";
 import {createContext} from "react";
 import {colyseus} from "@p3ntest/use-colyseus"
@@ -6,8 +6,8 @@ import {GameRoomState} from "../../../server/src/rooms/schema/GameRoomState";
 
 export class DiscordSDKContextType {
     constructor() {
-        this.discordSDK = {instanceId: "testId"} as unknown as DiscordSDK;
-        this.auth = {user: {global_name: "Anshroid"}} as unknown as AuthResponse;
+        this.discordSDK = {} as unknown as DiscordSDK;
+        this.auth = {} as unknown as AuthResponse;
     }
 
     auth: AuthResponse
@@ -15,6 +15,7 @@ export class DiscordSDKContextType {
 }
 
 export const DiscordSDKContext = createContext(new DiscordSDKContextType());
+
 
 export const {
     client,

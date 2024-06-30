@@ -36,7 +36,7 @@ export default function Lobby() {
                         <PlayerList className={"justify-self-end border rounded-md p-4"}/>
                     </div>
                     <button
-                        className={"align-bottom py-1 px-4 text-white font-bold text-2xl bg-red-950 rounded-2xl duration-75 outline outline-2 " + ((isOwner && enoughPlayers) ? "hover:-translate-y-2" : "")}
+                        className={"align-bottom py-1 px-4 font-bold text-2xl bg-red-950 rounded-2xl duration-75 outline outline-2 " + ((isOwner && enoughPlayers) ? "hover:-translate-y-2" : "")}
                         onClick={() => {
                             room.send("start")
                         }} disabled={!isOwner || !enoughPlayers}
@@ -44,7 +44,7 @@ export default function Lobby() {
                     </button>
                 </div>
                 :
-                <p className={"text-white text-center mt-[45vh]"}>Joining room...</p>
+                <p className={"text-center mt-[45vh]"}>Joining room...</p>
             }
         </>
     )

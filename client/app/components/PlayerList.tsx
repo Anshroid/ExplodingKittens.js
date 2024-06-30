@@ -6,13 +6,13 @@ export default function PlayerList(props: HTMLAttributes<HTMLDivElement>) {
 
     return (
         <div {...props}>
-            <h2 className={"text-white font-bold underline"}>Players in lobby</h2>
+            <h2 className={"font-bold underline"}>Players in lobby</h2>
             <ol>
                 {
                     spectators ?
-                        spectators.map(spectator => (
+                        spectators.toArray().map(spectator => (
                             <li key={spectator.sessionId}
-                                className={"text-white text-center"}>{spectator.displayName}</li>
+                                className={"text-center"}>{spectator.displayName}</li>
                         ))
                         :
                         null

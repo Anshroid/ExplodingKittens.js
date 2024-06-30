@@ -1,6 +1,6 @@
 import {Container, createRoot} from "react-dom/client";
 import App from "./pages/App";
-import {setupDiscordSdk} from "./utility/util"
+import {setupDiscordSdk} from "./utility/discord_sdk"
 import './index.css'
 
 import {DiscordSDK} from "@discord/embedded-app-sdk";
