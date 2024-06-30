@@ -23,7 +23,7 @@ jobs:
 
       - name: npm install, build, and test
         run: |
-          cd client
+          cd server
           npm install
           npm run build --if-present
           npm run test --if-present
@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: client
+          path: server
 
   deploy:
     runs-on: ubuntu-latest
@@ -53,5 +53,5 @@ jobs:
         with:
           app-name: 'explodingkittensbackend'
           slot-name: 'Production'
-          package: client
+          package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C44EBC3DF8BA49CCBF5D4EB29A929293 }}
