@@ -7,6 +7,8 @@ export async function setupDiscordSdk(discordSdk: DiscordSDK) {
     await discordSdk.ready();
     console.log("Discord SDK is ready");
 
+    console.log(import.meta.env.VITE_DISCORD_CLIENT_ID);
+
     // Authorize with Discord Client
     const { code } = await discordSdk.commands.authorize({
         client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
