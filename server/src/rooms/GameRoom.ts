@@ -1,7 +1,7 @@
 import {Client, Room} from "@colyseus/core";
-import {GamePlayer, GameRoomState, LobbyPlayer, TurnState} from "./schema/GameRoomState";
+import {GamePlayer, GameRoomState, LobbyPlayer} from "./schema/GameRoomState";
 import {Card, CardNames} from "../../shared/card";
-import {isCatCard} from "../../shared/util";
+import {isCatCard, TurnState} from "../../shared/util";
 
 // https://stackoverflow.com/a/12646864/9094935
 function shuffleArray(array: Array<any>) {

@@ -2,8 +2,7 @@ import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import {useEffect, useState} from "react";
 import CardsList from "../components/CardsList";
 import {Card} from "../../../server/shared/card";
-import {TurnState} from "../../../server/src/rooms/schema/GameRoomState";
-import {isCatCard} from "../../../server/shared/util";
+import {isCatCard, TurnState} from "../../../server/shared/util";
 import {GameModal} from "../components/GameModal";
 
 export default function Game() {

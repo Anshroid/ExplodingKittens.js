@@ -1,17 +1,7 @@
-import {Schema, MapSchema, ArraySchema, type, filter} from "@colyseus/schema";
+import {ArraySchema, filter, MapSchema, Schema, type} from "@colyseus/schema";
 import {Client} from "@colyseus/core";
 import {Card} from "../../../shared/card";
-
-export enum TurnState {
-    Normal,
-    AlteringTheFuture,
-    Favouring,
-    Noping,
-    ChoosingExplodingPosition,
-    ChoosingImplodingPosition,
-    GameOver
-}
-
+import {TurnState} from "../../../shared/util";
 
 export class LobbyPlayer extends Schema {
 
