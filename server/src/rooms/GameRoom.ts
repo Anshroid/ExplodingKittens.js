@@ -96,7 +96,7 @@ export class GameRoom extends Room<GameRoomState> {
 
             let card = this.state.deck.shift();
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
-            if (this.checkDeath(card, client)) return;
+            if (this.checkDeath(card)) return;
             this.state.players.at(this.state.turnIndex).cards.push(card);
             this.endTurn();
         })
@@ -139,7 +139,7 @@ export class GameRoom extends Room<GameRoomState> {
                     case Card.DRAWFROMBOTTOM:
                         let card = this.state.deck.pop();
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
-                        if (this.checkDeath(card, client)) return;
+                        if (this.checkDeath(card)) return;
                         this.state.players.at(this.state.turnIndex).cards.push(card);
                         this.endTurn();
                         break;
@@ -271,6 +271,8 @@ export class GameRoom extends Room<GameRoomState> {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex) return;
             if (![TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(this.state.turnState)) return;
 
+            this.log("Choosing position: index " + message.index)
+
             this.state.deck.splice(message.index, 0, this.state.turnState === TurnState.ChoosingImplodingPosition ? Card.IMPLODING : Card.EXPLODING);
 
             this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
@@ -360,20 +362,22 @@ export class GameRoom extends Room<GameRoomState> {
         this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder + this.state.players.length) % this.state.players.length; // Cycle turns, js uses -1 % n = -1, so we must add n to make it positive
     }
 
-    checkDeath(card: Card, _: Client) {
+    checkDeath(card: Card) {
         if (card === Card.IMPLODING) {
             if (!this.state.implosionRevealed) {
                 this.state.implosionRevealed = true;
                 this.state.turnState = TurnState.ChoosingImplodingPosition
             } else {
-                this.killPlayer(this.state.turnIndex)
+                this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
+                this.state.turnRepeats = 1; // Make sure next player only has one turn
+                this.killPlayer(this.state.turnIndex);
             }
             return true; // Don't end turn, wait for the response
         } else if (card === Card.EXPLODING) {
             if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
-                this.killPlayer(this.state.turnIndex);
+                this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
-                return true; // Pass turn to next alive player by keeping index the same
+                this.killPlayer(this.state.turnIndex);
             } else {
                 this.broadcast("defused");
                 this.state.turnState = TurnState.ChoosingExplodingPosition
@@ -401,7 +405,6 @@ export class GameRoom extends Room<GameRoomState> {
 
         if (this.state.players.length === 1) {
             this.state.turnState = TurnState.GameOver;
-            this.broadcast("gameEnd");
         }
     }
 
@@ -413,11 +416,11 @@ export class GameRoom extends Room<GameRoomState> {
         this.state.turnState = TurnState.Noping;
 
         this.state.nopeTimeout = setTimeout(() => {
+            this.state.turnState = TurnState.Normal;
             if (!this.state.noped) {
                 callback()
             }
             this.state.noped = false;
-            this.state.turnState = TurnState.Normal;
         }, 3000);
     }
 

@@ -4,8 +4,9 @@ import {TargetCard} from "./TargetCard";
 import {TargetDiscard} from "./TargetDiscard";
 import {ChoosePosition} from "./ChoosePosition";
 import {Card} from "../../../server/shared/card";
+import {Favour} from "./Favour";
 
-export function GameModal({type, cardCallback}: { type: string, cardCallback: (targetSessionId?: string, targetCard?: Card, targetIndex?: number) => void }) {
+export function GameModal({type, cardCallback, closeCallback}: { type: string, cardCallback: (targetSessionId?: string, targetCard?: Card, targetIndex?: number) => void, closeCallback: () => void}) {
     let [tempPlayerStorage, setTempPlayerStorage] = useState<string>("");
 
     return (
@@ -33,6 +34,8 @@ export function GameModal({type, cardCallback}: { type: string, cardCallback: (t
                                                 return "Choose a Card!";
                                             case "choosePosition":
                                                 return "Choose a Position!";
+                                            case "favour":
+                                                return "Choose a Card!";
                                         }
                                         return "";
                                     })()
@@ -47,7 +50,9 @@ export function GameModal({type, cardCallback}: { type: string, cardCallback: (t
                                             case "targetDiscard":
                                                 return <TargetDiscard callback={index => cardCallback(undefined, undefined, index)}/>;
                                             case "choosePosition":
-                                                return <ChoosePosition/>;
+                                                return <ChoosePosition callback={closeCallback}/>;
+                                            case "favour":
+                                                return <Favour callback={closeCallback}/>
                                         }
                                         return "";
                                     })()

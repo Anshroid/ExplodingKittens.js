@@ -13,6 +13,8 @@ export default function Game() {
     let turnIndex = useColyseusState((state) => state.turnIndex);
     let playerIndexMap = useColyseusState((state) => state.playerIndexMap)
     let players = useColyseusState((state) => state.players);
+    let ownerId = useColyseusState(state => state.ownerId);
+    let turnRepeats = useColyseusState(state => state.turnRepeats)
 
     if (room === undefined || turnState === undefined || turnIndex === undefined || playerIndexMap === undefined || players == undefined) return;
 
@@ -38,7 +40,29 @@ export default function Game() {
             if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && turnIndex === ourIndex) {
                 setCurrentModal("choosePosition");
             }
+
+            if (currentValue === TurnState.GameOver && ownerId === room.sessionId) {
+                setTimeout(() => {
+                    room.send("returnToLobby");
+                }, 5000);
+            }
+        });
+
+        room.state.listen("ownerId", (currentValue) => {
+            if (currentValue === room.sessionId && turnState === TurnState.GameOver) {
+                setTimeout(() => {
+                    room.send("returnToLobby");
+                }, 5000);
+            }
         })
+
+        room.onMessage("favourRequest", () => {
+            setCurrentModal("favour");
+        })
+
+        return () => {
+            room.removeAllListeners();
+        }
     }, []);
 
     function cardCallback(targetSessionId?: string, targetCard?: Card, targetIndex?: number) {
@@ -75,7 +99,7 @@ export default function Game() {
 
     return (
         <>
-            <GameModal type={currentModal} cardCallback={cardCallback}/>
+            <GameModal type={currentModal} cardCallback={cardCallback} closeCallback={() => setCurrentModal("")}/>
             <div className={"flex flex-col items-center text-center"}>
                 <CardsList cards={cards} selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}/>
                 <br/>
@@ -117,7 +141,14 @@ export default function Game() {
 
                 <br/>
 
-                <p>{"It's " + players.at(turnIndex).displayName + "'s turn"}</p>
+                <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+
+                <br/>
+                <div>
+                    <h3 className={"font-bold"}>Debug information</h3>
+                    <p>Turn state: {turnState}</p>
+                    <p>Player index map: {JSON.stringify(playerIndexMap.toJSON())}</p>
+                </div>
             </div>
         </>
     )
