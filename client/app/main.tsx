@@ -7,7 +7,7 @@ import {DiscordSDK} from "@discord/embedded-app-sdk";
 import {client, DiscordSDKContext, DiscordSDKContextType, setCurrentRoom} from "./utility/contexts";
 import {GameRoomState} from "../../server/src/rooms/schema/GameRoomState";
 
-const discordSDK = new DiscordSDK(import.meta.env.VITE_DISCORD_CLIENT_ID);
+const discordSDK = new DiscordSDK("1248976494152122419");
 
 console.log("Discord SDK is authing...")
 setupDiscordSdk(discordSDK).then((receivedAuth) => {
