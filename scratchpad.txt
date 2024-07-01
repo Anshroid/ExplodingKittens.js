@@ -1,0 +1,11 @@
+{
+  "displayName": "console",
+  "instanceId": "test"
+}
+
+Prod URLs:
+/api  -> explodingkittensbackend2-fmanascfgrdghff6.westeurope-01.azurewebsites.net
+/     -> lemon-glacier-0e9e5ce03.5.azurestaticapps.net
+
+Dev URLs:
+      -> https://-86-18-229-147.ngrok-free.app

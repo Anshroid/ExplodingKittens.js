@@ -5,8 +5,9 @@ import {TargetDiscard} from "./TargetDiscard";
 import {ChoosePosition} from "./ChoosePosition";
 import {Card} from "../../../server/shared/card";
 import {Favour} from "./Favour";
+import {SeeTheFuture} from "./SeeTheFuture";
 
-export function GameModal({type, cardCallback, closeCallback}: { type: string, cardCallback: (targetSessionId?: string, targetCard?: Card, targetIndex?: number) => void, closeCallback: () => void}) {
+export function GameModal({type, cardCallback, closeCallback, theFuture}: { type: string, cardCallback: (targetSessionId?: string, targetCard?: Card, targetIndex?: number) => void, closeCallback: () => void, theFuture: Card[]}) {
     let [tempPlayerStorage, setTempPlayerStorage] = useState<string>("");
 
     return (
@@ -36,6 +37,9 @@ export function GameModal({type, cardCallback, closeCallback}: { type: string, c
                                                 return "Choose a Position!";
                                             case "favour":
                                                 return "Choose a Card!";
+                                            case "seeTheFuture":
+                                            case "alterTheFuture":
+                                                return "Here's the future!"
                                         }
                                         return "";
                                     })()
@@ -46,13 +50,17 @@ export function GameModal({type, cardCallback, closeCallback}: { type: string, c
                                             case "targetPlayer":
                                                 return <TargetPlayer callback={sessionId => {setTempPlayerStorage(sessionId); cardCallback(sessionId)}}/>
                                             case "targetCard":
-                                                return <TargetCard callback={cardId => cardCallback(tempPlayerStorage, cardId)}/>;
+                                                return <TargetCard callback={cardId => cardCallback(tempPlayerStorage, cardId)}/>
                                             case "targetDiscard":
-                                                return <TargetDiscard callback={index => cardCallback(undefined, undefined, index)}/>;
+                                                return <TargetDiscard callback={index => cardCallback(undefined, undefined, index)}/>
                                             case "choosePosition":
-                                                return <ChoosePosition callback={closeCallback}/>;
+                                                return <ChoosePosition callback={closeCallback}/>
                                             case "favour":
                                                 return <Favour callback={closeCallback}/>
+                                            case "seeTheFuture":
+                                                return <SeeTheFuture alter={false} theFuture={theFuture} callback={closeCallback}/>
+                                            case "alterTheFuture":
+                                                return <SeeTheFuture alter={true} theFuture={theFuture} callback={closeCallback}/>
                                         }
                                         return "";
                                     })()

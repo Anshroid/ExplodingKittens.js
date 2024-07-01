@@ -32,6 +32,7 @@ export default function Game() {
     let selectedCards = selectedIndices.map(index => cards[index]);
 
     let [currentModal, setCurrentModal] = useState("");
+    let [theFuture, setTheFuture] = useState<Card[]>([])
 
     useEffect(() => {
         // Listen to schema changes
@@ -57,6 +58,11 @@ export default function Game() {
 
         room.onMessage("favourRequest", () => {
             setCurrentModal("favour");
+        })
+
+        room.onMessage("theFuture", (message) => {
+            setCurrentModal((turnState === TurnState.AlteringTheFuture ? "alter" : "see") + "TheFuture");
+            setTheFuture(message.cards)
         })
 
         return () => {
@@ -98,7 +104,7 @@ export default function Game() {
 
     return (
         <>
-            <GameModal type={currentModal} cardCallback={cardCallback} closeCallback={() => setCurrentModal("")}/>
+            <GameModal type={currentModal} cardCallback={cardCallback} closeCallback={() => setCurrentModal("")} theFuture={theFuture}/>
             <div className={"flex flex-col items-center text-center"}>
                 <CardsList cards={cards} selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}/>
                 <br/>
