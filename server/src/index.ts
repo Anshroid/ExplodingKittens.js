@@ -13,7 +13,7 @@ import { listen } from "@colyseus/tools";
 // Import Colyseus config
 import app from "./app.config";
 
-console.log(process.env.PORT);
+console.log(process.env.NODE_ENV);
 
 // Create and listen on 2567 (or PORT environment variable.)
 listen(app).then();
