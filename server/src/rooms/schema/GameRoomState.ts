@@ -36,7 +36,7 @@ export class GameRoomState extends Schema {
 
     // Game Settings
     @type("boolean") isImplodingEnabled = true;
-    @type("boolean") nopeQTEMode = true;
+    @type("number") nopeQTECooldown = 3000;
 
     // Generic game state
     @type("number") turnIndex: number = 0;

@@ -25,7 +25,7 @@ export class GameRoom extends Room<GameRoomState> {
         this.onMessage("changeSettings", (client, message) => {
             if (this.state.ownerId === client.sessionId && !this.state.started) {
                 this.state.isImplodingEnabled = message.isImplodingEnabled;
-                this.state.nopeQTEMode = message.nopeQTEMode;
+                this.state.nopeQTECooldown = message.nopeQTECooldown;
             }
         });
 
@@ -409,7 +409,7 @@ export class GameRoom extends Room<GameRoomState> {
     }
 
     processNopeQTE(callback: () => void) {
-        if (!this.state.nopeQTEMode) {
+        if (this.state.nopeQTECooldown === 0) {
             return;
         }
 
@@ -421,7 +421,7 @@ export class GameRoom extends Room<GameRoomState> {
                 callback()
             }
             this.state.noped = false;
-        }, 3000);
+        }, this.state.nopeQTECooldown);
     }
 
     updatePlayerIndices() {
