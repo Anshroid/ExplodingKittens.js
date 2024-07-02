@@ -246,7 +246,7 @@ export class GameRoom extends Room<GameRoomState> {
             if (!message.cards.every(card => this.state.deck.slice(0, 3).includes(card))) return;
 
             this.state.deck.splice(0, 3, ...message.cards);
-            this.state.turnState = TurnState.AlteringTheFuture;
+            this.state.turnState = TurnState.Normal;
         });
 
         this.onMessage("nope", () => {
