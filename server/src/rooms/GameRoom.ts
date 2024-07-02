@@ -243,6 +243,7 @@ export class GameRoom extends Room<GameRoomState> {
 
         this.onMessage("alterTheFuture", (client, message: { cards: Array<Card> }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.AlteringTheFuture) return;
+            if (!message.cards.every(card => this.state.deck.slice(0, 3).includes(card))) return;
 
             this.state.deck.splice(0, 3, ...message.cards);
             this.state.turnState = TurnState.AlteringTheFuture;
