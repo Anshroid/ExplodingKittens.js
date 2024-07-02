@@ -193,10 +193,12 @@ export class GameRoom extends Room<GameRoomState> {
                 switch (message.cards.length) {
                     case 2:
                         if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => isCatCard(c)))) {
-                            if (this.state.players.at(this.state.turnIndex).cards.length > 0) return;
+                            if (this.state.players.at(message.target).cards.length == 0) return;
 
                             let stealIndex = ~~(Math.random() * this.state.players.at(message.target).cards.length);
-                            let stolenCard = this.state.players.at(this.state.turnIndex).cards.splice(stealIndex, 1)[0];
+
+                            let stolenCard = this.state.players.at(message.target).cards[stealIndex];
+                            this.state.players.at(message.target).cards.deleteAt(stealIndex);
                             this.state.players.at(this.state.turnIndex).cards.push(stolenCard);
                             break;
                         }
