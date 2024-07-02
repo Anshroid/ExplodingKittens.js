@@ -85,7 +85,10 @@ export default function Game() {
                 break;
             case 3:
                 if (!targetSessionId) return;
-                if (!targetCard) setCurrentModal("targetCard");
+                if (!targetCard) {
+                    setCurrentModal("targetCard");
+                    return;
+                }
                 room.send("playCombo", {
                     cards: selectedCards,
                     target: playerIndexMap.get(targetSessionId),
@@ -116,10 +119,8 @@ export default function Game() {
                             switch (selectedCards.length) {
                                 case 1:
                                 case 2:
-                                    setCurrentModal("targetPlayer");
-                                    break;
                                 case 3:
-                                    setCurrentModal("targetCard");
+                                    setCurrentModal("targetPlayer");
                                     break;
                                 case 5:
                                     setCurrentModal("targetDiscard");
