@@ -96,8 +96,8 @@ export class GameRoom extends Room<GameRoomState> {
 
             let card = this.state.deck.shift();
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
-            if (this.checkDeath(card)) return;
             this.state.players.at(this.state.turnIndex).cards.push(card);
+            if (this.checkDeath(card)) return;
             this.endTurn();
         })
 
@@ -139,8 +139,8 @@ export class GameRoom extends Room<GameRoomState> {
                     case Card.DRAWFROMBOTTOM:
                         let card = this.state.deck.pop();
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
-                        if (this.checkDeath(card)) return;
                         this.state.players.at(this.state.turnIndex).cards.push(card);
+                        if (this.checkDeath(card)) return;
                         this.endTurn();
                         break;
 
@@ -232,6 +232,7 @@ export class GameRoom extends Room<GameRoomState> {
                         let card = this.state.discard.at(message.targetIndex)
                         this.state.discard.deleteAt(this.state.discard.indexOf(card));
                         this.state.players.at(this.state.turnIndex).cards.push(card);
+                        this.checkDeath(card)
                         break;
 
                     default:
