@@ -61,7 +61,7 @@ export default function Game() {
         })
 
         room.onMessage("theFuture", (message) => {
-            setCurrentModal((turnState === TurnState.AlteringTheFuture ? "alter" : "see") + "TheFuture");
+            setCurrentModal("theFuture");
             setTheFuture(message.cards)
         })
 
