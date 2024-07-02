@@ -9,7 +9,7 @@ export function SortableCard({card, id}: { card: Card, id: number }) {
         setNodeRef,
         transform,
         transition
-    } = useSortable({id: id})
+    } = useSortable({id: id});
 
     const style = {
         transform: CSS.Transform.toString(transform),

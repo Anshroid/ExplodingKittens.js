@@ -37,8 +37,7 @@ export function GameModal({type, cardCallback, closeCallback, theFuture}: { type
                                                 return "Choose a Position!";
                                             case "favour":
                                                 return "Choose a Card!";
-                                            case "seeTheFuture":
-                                            case "alterTheFuture":
+                                            case "theFuture":
                                                 return "Here's the future!"
                                         }
                                         return "";
@@ -57,10 +56,8 @@ export function GameModal({type, cardCallback, closeCallback, theFuture}: { type
                                                 return <ChoosePosition callback={closeCallback}/>
                                             case "favour":
                                                 return <Favour callback={closeCallback}/>
-                                            case "seeTheFuture":
-                                                return <SeeTheFuture alter={false} theFuture={theFuture} callback={closeCallback}/>
-                                            case "alterTheFuture":
-                                                return <SeeTheFuture alter={true} theFuture={theFuture} callback={closeCallback}/>
+                                            case "theFuture":
+                                                return <SeeTheFuture theFuture={theFuture} callback={closeCallback}/>
                                         }
                                         return "";
                                     })()

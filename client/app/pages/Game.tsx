@@ -1,19 +1,20 @@
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import {useEffect, useState} from "react";
 import CardsList from "../components/CardsList";
-import {Card} from "../../../server/shared/card";
+import {Card, CardNames} from "../../../server/shared/card";
 import {isCatCard, TurnState} from "../../../server/shared/util";
 import {GameModal} from "../components/GameModal";
 
 export default function Game() {
     // let {auth, discordSDK} = useContext(DiscordSDKContext);
     let room = useColyseusRoom();
-    let turnState = useColyseusState((state) => state.turnState);
-    let turnIndex = useColyseusState((state) => state.turnIndex);
-    let playerIndexMap = useColyseusState((state) => state.playerIndexMap)
-    let players = useColyseusState((state) => state.players);
+    let turnState = useColyseusState(state => state.turnState);
+    let turnIndex = useColyseusState(state => state.turnIndex);
+    let playerIndexMap = useColyseusState(state => state.playerIndexMap)
+    let players = useColyseusState(state => state.players);
     let ownerId = useColyseusState(state => state.ownerId);
-    let turnRepeats = useColyseusState(state => state.turnRepeats)
+    let turnRepeats = useColyseusState(state => state.turnRepeats);
+    let discard = useColyseusState(state => state.discard);
 
     if (room === undefined || turnState === undefined || turnIndex === undefined || playerIndexMap === undefined || players == undefined) return;
 
@@ -61,7 +62,7 @@ export default function Game() {
         })
 
         room.onMessage("theFuture", (message) => {
-            setCurrentModal((turnState === TurnState.AlteringTheFuture ? "alter" : "see") + "TheFuture");
+            setCurrentModal("theFuture");
             setTheFuture(message.cards)
         })
 
@@ -84,7 +85,10 @@ export default function Game() {
                 break;
             case 3:
                 if (!targetSessionId) return;
-                if (!targetCard) setCurrentModal("targetCard");
+                if (!targetCard) {
+                    setCurrentModal("targetCard");
+                    return;
+                }
                 room.send("playCombo", {
                     cards: selectedCards,
                     target: playerIndexMap.get(targetSessionId),
@@ -104,55 +108,63 @@ export default function Game() {
 
     return (
         <>
-            <GameModal type={currentModal} cardCallback={cardCallback} closeCallback={() => setCurrentModal("")} theFuture={theFuture}/>
-            <div className={"flex flex-col items-center text-center"}>
-                <CardsList cards={cards} selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}/>
-                <br/>
-                <button onClick={() => {
-                    if ((selectedIndices.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {
-                        switch (selectedCards.length) {
-                            case 1:
-                            case 2:
-                                setCurrentModal("targetPlayer");
-                                break;
-                            case 3:
-                                setCurrentModal("targetCard");
-                                break;
-                            case 5:
-                                setCurrentModal("targetDiscard");
-                                break;
+            <GameModal type={currentModal} cardCallback={cardCallback} closeCallback={() => setCurrentModal("")}
+                       theFuture={theFuture}/>
+            <div className={"flex items-center text-center justify-center h-full"}>
+                <div className={"flex-1 justify-center"}>
+                    <CardsList cards={cards} selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}/>
+                    <br/>
+                    <button onClick={() => {
+                        if ((selectedIndices.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {
+                            switch (selectedCards.length) {
+                                case 1:
+                                case 2:
+                                case 3:
+                                    setCurrentModal("targetPlayer");
+                                    break;
+                                case 5:
+                                    setCurrentModal("targetDiscard");
+                                    break;
+                            }
+                            return;
                         }
-                        return;
-                    }
 
-                    room.send("playCard", {card: selectedCards[0]});
-                    setSelectedIndices([]);
-                }}
-                        disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
-                        className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
-                </button>
+                        room.send("playCard", {card: selectedCards[0]});
+                        setSelectedIndices([]);
+                    }}
+                            disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
+                            className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
+                    </button>
 
-                <button onClick={() => {
-                    // console.log(currentModal);
-                    // if (currentModal === "targetPlayer") {
-                    //     setCurrentModal("");
-                    //     return;
-                    // }
-                    // setCurrentModal("targetPlayer")
-                    room.send("drawCard")
-                }} disabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
-                        className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-blue-600" : "bg-blue-400")}>Draw!
-                </button>
+                    <button onClick={() => {
+                        // console.log(currentModal);
+                        // if (currentModal === "targetPlayer") {
+                        //     setCurrentModal("");
+                        //     return;
+                        // }
+                        // setCurrentModal("targetPlayer")
+                        room.send("drawCard")
+                    }} disabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
+                            className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-blue-800" : "bg-blue-400")}>Draw!
+                    </button>
 
-                <br/>
+                    <button onClick={() => {
+                        room.send("nope")
+                    }} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}
+                            className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!
+                    </button>
 
-                <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                    <br/>
 
-                <br/>
-                <div>
-                    <h3 className={"font-bold"}>Debug information</h3>
-                    <p>Turn state: {turnState}</p>
-                    <p>Player index map: {JSON.stringify(playerIndexMap.toJSON())}</p>
+                    <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                    <p>Discard pile: {discard.map(card => CardNames.get(card)).join(", ")}</p>
+
+                    <br/>
+                    <div>
+                        <h3 className={"font-bold"}>Debug information</h3>
+                        <p>Turn state: {turnState}</p>
+                        <p>Player index map: {JSON.stringify(playerIndexMap.toJSON())}</p>
+                    </div>
                 </div>
             </div>
         </>
