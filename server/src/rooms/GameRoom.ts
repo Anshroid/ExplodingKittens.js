@@ -252,8 +252,9 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.turnState = TurnState.Normal;
         });
 
-        this.onMessage("nope", () => {
+        this.onMessage("nope", (client) => {
             if (this.state.turnState !== TurnState.Noping) return;
+            if (!this.state.players.at(client.userData.playerIndex).cards.deleteAt(this.state.players.at(client.userData.playerIndex).cards.indexOf(Card.NOPE))) return;
 
             this.state.nopeTimeout.refresh();
             this.state.noped = !this.state.noped;
@@ -369,6 +370,7 @@ export class GameRoom extends Room<GameRoomState> {
     checkDeath(card: Card) {
         if (card === Card.IMPLODING) {
             if (!this.state.implosionRevealed) {
+                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
                 this.state.implosionRevealed = true;
                 this.state.turnState = TurnState.ChoosingImplodingPosition
             } else {
@@ -383,6 +385,7 @@ export class GameRoom extends Room<GameRoomState> {
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
             } else {
+                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.EXPLODING));
                 this.broadcast("defused");
                 this.state.turnState = TurnState.ChoosingExplodingPosition
             }
