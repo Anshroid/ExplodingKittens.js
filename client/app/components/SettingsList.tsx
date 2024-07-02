@@ -16,7 +16,7 @@ export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
             <h2 className={"font-bold underline"}></h2>
             <label className={"align-middle"}>Use Imploding Kittens?</label>
             <ReactSwitch checked={isImplodingEnabled} onChange={(checked) => {
-                room.send("changeSettings", {isImplodingEnabled: checked, nopeQTEMode: true})
+                room.send("changeSettings", {isImplodingEnabled: checked, nopeQTECooldown: 3000})
             }} disabled={!isOwner} className={"align-middle ml-1 scale-75"} checkedIcon={false} uncheckedIcon={false}/>
         </div>
     )

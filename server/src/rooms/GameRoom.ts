@@ -25,7 +25,7 @@ export class GameRoom extends Room<GameRoomState> {
         this.onMessage("changeSettings", (client, message) => {
             if (this.state.ownerId === client.sessionId && !this.state.started) {
                 this.state.isImplodingEnabled = message.isImplodingEnabled;
-                this.state.nopeQTEMode = message.nopeQTEMode;
+                this.state.nopeQTECooldown = message.nopeQTECooldown;
             }
         });
 
@@ -96,8 +96,8 @@ export class GameRoom extends Room<GameRoomState> {
 
             let card = this.state.deck.shift();
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
-            if (this.checkDeath(card)) return;
             this.state.players.at(this.state.turnIndex).cards.push(card);
+            if (this.checkDeath(card)) return;
             this.endTurn();
         })
 
@@ -139,8 +139,8 @@ export class GameRoom extends Room<GameRoomState> {
                     case Card.DRAWFROMBOTTOM:
                         let card = this.state.deck.pop();
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
-                        if (this.checkDeath(card)) return;
                         this.state.players.at(this.state.turnIndex).cards.push(card);
+                        if (this.checkDeath(card)) return;
                         this.endTurn();
                         break;
 
@@ -193,10 +193,12 @@ export class GameRoom extends Room<GameRoomState> {
                 switch (message.cards.length) {
                     case 2:
                         if (new Set(message.cards).size === 1 || (message.cards.includes(Card.FERALCAT) && message.cards.every((c) => isCatCard(c)))) {
-                            if (this.state.players.at(this.state.turnIndex).cards.length > 0) return;
+                            if (this.state.players.at(message.target).cards.length == 0) return;
 
                             let stealIndex = ~~(Math.random() * this.state.players.at(message.target).cards.length);
-                            let stolenCard = this.state.players.at(this.state.turnIndex).cards.splice(stealIndex, 1)[0];
+
+                            let stolenCard = this.state.players.at(message.target).cards[stealIndex];
+                            this.state.players.at(message.target).cards.deleteAt(stealIndex);
                             this.state.players.at(this.state.turnIndex).cards.push(stolenCard);
                             break;
                         }
@@ -232,6 +234,7 @@ export class GameRoom extends Room<GameRoomState> {
                         let card = this.state.discard.at(message.targetIndex)
                         this.state.discard.deleteAt(this.state.discard.indexOf(card));
                         this.state.players.at(this.state.turnIndex).cards.push(card);
+                        this.checkDeath(card)
                         break;
 
                     default:
@@ -243,13 +246,15 @@ export class GameRoom extends Room<GameRoomState> {
 
         this.onMessage("alterTheFuture", (client, message: { cards: Array<Card> }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.AlteringTheFuture) return;
+            if (!message.cards.every(card => this.state.deck.slice(0, 3).includes(card))) return;
 
             this.state.deck.splice(0, 3, ...message.cards);
-            this.state.turnState = TurnState.AlteringTheFuture;
+            this.state.turnState = TurnState.Normal;
         });
 
-        this.onMessage("nope", () => {
+        this.onMessage("nope", (client) => {
             if (this.state.turnState !== TurnState.Noping) return;
+            if (!this.state.players.at(client.userData.playerIndex).cards.deleteAt(this.state.players.at(client.userData.playerIndex).cards.indexOf(Card.NOPE))) return;
 
             this.state.nopeTimeout.refresh();
             this.state.noped = !this.state.noped;
@@ -365,6 +370,7 @@ export class GameRoom extends Room<GameRoomState> {
     checkDeath(card: Card) {
         if (card === Card.IMPLODING) {
             if (!this.state.implosionRevealed) {
+                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
                 this.state.implosionRevealed = true;
                 this.state.turnState = TurnState.ChoosingImplodingPosition
             } else {
@@ -379,6 +385,7 @@ export class GameRoom extends Room<GameRoomState> {
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
             } else {
+                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.EXPLODING));
                 this.broadcast("defused");
                 this.state.turnState = TurnState.ChoosingExplodingPosition
             }
@@ -409,7 +416,7 @@ export class GameRoom extends Room<GameRoomState> {
     }
 
     processNopeQTE(callback: () => void) {
-        if (!this.state.nopeQTEMode) {
+        if (this.state.nopeQTECooldown === 0) {
             return;
         }
 
@@ -421,7 +428,7 @@ export class GameRoom extends Room<GameRoomState> {
                 callback()
             }
             this.state.noped = false;
-        }, 3000);
+        }, this.state.nopeQTECooldown);
     }
 
     updatePlayerIndices() {
