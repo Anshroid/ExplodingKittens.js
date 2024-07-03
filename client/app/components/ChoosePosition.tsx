@@ -8,7 +8,7 @@ export function ChoosePosition({callback}: { callback: () => void }) {
 
     return (
         <>
-            <input type={"number"} value={value} onChange={e => setValue(e.target.valueAsNumber)}/>
+            <input type={"number"} value={value} onChange={e => setValue(e.target.valueAsNumber)} className={"text-black"}/>
             <button onClick={() => {
                 room?.send("choosePosition", {index: value});
                 callback()

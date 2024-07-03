@@ -256,6 +256,8 @@ export class GameRoom extends Room<GameRoomState> {
             if (this.state.turnState !== TurnState.Noping) return;
             if (!this.state.players.at(client.userData.playerIndex).cards.deleteAt(this.state.players.at(client.userData.playerIndex).cards.indexOf(Card.NOPE))) return;
 
+            this.state.discard.push(Card.NOPE);
+
             this.state.nopeTimeout.refresh();
             this.state.noped = !this.state.noped;
         });
@@ -386,6 +388,7 @@ export class GameRoom extends Room<GameRoomState> {
                 this.killPlayer(this.state.turnIndex);
             } else {
                 this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.EXPLODING));
+                this.state.discard.push(Card.DEFUSE);
                 this.broadcast("defused");
                 this.state.turnState = TurnState.ChoosingExplodingPosition
             }

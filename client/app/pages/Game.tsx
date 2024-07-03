@@ -36,12 +36,13 @@ export default function Game() {
     let [theFuture, setTheFuture] = useState<Card[]>([])
 
     useEffect(() => {
-        const listeners = []
-        
+        const listeners: Array<() => void> = []
+
         // Listen to schema changes
         listeners.push(
             room.state.listen("turnState", (currentValue) => {
-                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && turnIndex === ourIndex) {
+                console.log(currentValue, turnIndex, ourIndex)
+                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && (turnIndex === ourIndex)) {
                     setCurrentModal("choosePosition");
                 }
 
@@ -71,7 +72,9 @@ export default function Game() {
         );
 
         return () => {
-            listeners.forEach(removeCallback => {removeCallback()});
+            listeners.forEach(removeCallback => {
+                removeCallback()
+            });
         }
     }, []);
 
