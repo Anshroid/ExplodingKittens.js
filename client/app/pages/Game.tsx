@@ -36,38 +36,42 @@ export default function Game() {
     let [theFuture, setTheFuture] = useState<Card[]>([])
 
     useEffect(() => {
+        const listeners = []
+        
         // Listen to schema changes
-        room.state.listen("turnState", (currentValue) => {
-            if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && turnIndex === ourIndex) {
-                setCurrentModal("choosePosition");
-            }
+        listeners.push(
+            room.state.listen("turnState", (currentValue) => {
+                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && turnIndex === ourIndex) {
+                    setCurrentModal("choosePosition");
+                }
 
-            if (currentValue === TurnState.GameOver && ownerId === room.sessionId) {
-                setTimeout(() => {
-                    room.send("returnToLobby");
-                }, 5000);
-            }
-        });
+                if (currentValue === TurnState.GameOver && ownerId === room.sessionId) {
+                    setTimeout(() => {
+                        room.send("returnToLobby");
+                    }, 5000);
+                }
+            }),
 
-        room.state.listen("ownerId", (currentValue) => {
-            if (currentValue === room.sessionId && turnState === TurnState.GameOver) {
-                setTimeout(() => {
-                    room.send("returnToLobby");
-                }, 5000);
-            }
-        })
+            room.state.listen("ownerId", (currentValue) => {
+                if (currentValue === room.sessionId && turnState === TurnState.GameOver) {
+                    setTimeout(() => {
+                        room.send("returnToLobby");
+                    }, 5000);
+                }
+            }),
 
-        room.onMessage("favourRequest", () => {
-            setCurrentModal("favour");
-        })
+            room.onMessage("favourRequest", () => {
+                setCurrentModal("favour");
+            }),
 
-        room.onMessage("theFuture", (message) => {
-            setCurrentModal("theFuture");
-            setTheFuture(message.cards)
-        })
+            room.onMessage("theFuture", (message) => {
+                setCurrentModal("theFuture");
+                setTheFuture(message.cards)
+            })
+        );
 
         return () => {
-            room.removeAllListeners();
+            listeners.forEach(removeCallback => {removeCallback()});
         }
     }, []);
 
