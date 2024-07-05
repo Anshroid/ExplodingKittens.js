@@ -1,9 +1,9 @@
 import {Card, CardNames} from "../../../server/shared/card";
 
-export default function CardsList({cards, selectedIndices, setSelectedIndices}: {
+export default function CardsList({cards, selectedCardMask, setSelectedCardMask}: {
     cards: Card[];
-    selectedIndices: Array<number>,
-    setSelectedIndices: (selectedIndices: Array<number>) => void
+    selectedCardMask: Array<boolean>,
+    setSelectedCardMask: (selectedIndices: Array<boolean>) => void
 }) {
     return (
         <>
@@ -11,13 +11,11 @@ export default function CardsList({cards, selectedIndices, setSelectedIndices}: 
                 {cards.map((card, index) => {
                     return <li key={index}>
                         <button onClick={() => {
-                            if (selectedIndices.includes(index)) {
-                                setSelectedIndices(selectedIndices.filter((c) => c !== index));
-                            } else {
-                                setSelectedIndices(selectedIndices.concat(index));
-                            }
+                            const temp = structuredClone(selectedCardMask);
+                            temp.splice(index, 1, !temp[index])
+                            setSelectedCardMask(temp);
                         }}
-                                className={selectedIndices.includes(index) ? "bg-amber-400" : ""}>{CardNames.get(card)}</button>
+                                className={selectedCardMask[index] ? "bg-amber-400" : ""}>{CardNames.get(card)}</button>
                     </li>
                 })}
             </ul>

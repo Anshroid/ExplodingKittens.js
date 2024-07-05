@@ -23,14 +23,14 @@ export default function Game() {
     let cards = players.at(ourIndex)?.cards;
     if (cards === undefined) return;
 
-    let [selectedIndices, setSelectedIndices] = useState<Array<Card>>([]);
-    let [prevCards, setPrevCards] = useState(cards);
+    let [selectedCardMask, setSelectedCardMask] = useState<Array<boolean>>([]);
+    let [prevCards, setPrevCards] = useState<Array<Card>>([]);
     if (prevCards !== cards) {
         setPrevCards(cards);
-        setSelectedIndices([]);
+        setSelectedCardMask(cards.map(_ => false));
     }
 
-    let selectedCards = selectedIndices.map(index => cards[index]);
+    let selectedCards = cards.filter((_, index) => selectedCardMask[index]);
 
     let [currentModal, setCurrentModal] = useState("");
     let [theFuture, setTheFuture] = useState<Card[]>([])
@@ -109,7 +109,7 @@ export default function Game() {
         }
 
         setCurrentModal("");
-        setSelectedIndices([]);
+        setSelectedCardMask(cards.map(_ => false));
     }
 
 
@@ -119,10 +119,10 @@ export default function Game() {
                        theFuture={theFuture}/>
             <div className={"flex items-center text-center justify-center h-full"}>
                 <div className={"flex-1 justify-center"}>
-                    <CardsList cards={cards} selectedIndices={selectedIndices} setSelectedIndices={setSelectedIndices}/>
+                    <CardsList cards={cards} selectedCardMask={selectedCardMask} setSelectedCardMask={setSelectedCardMask}/>
                     <br/>
                     <button onClick={() => {
-                        if ((selectedIndices.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {
+                        if ((selectedCardMask.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {
                             switch (selectedCards.length) {
                                 case 1:
                                 case 2:
@@ -137,7 +137,7 @@ export default function Game() {
                         }
 
                         room.send("playCard", {card: selectedCards[0]});
-                        setSelectedIndices([]);
+                        setSelectedCardMask(cards.map(_ => false));
                     }}
                             disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
                             className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
