@@ -1,8 +1,14 @@
-import {Card, CardNames} from "../../../server/shared/card";
+import {Card} from "../../../server/shared/card";
 import {useSortable} from "@dnd-kit/sortable";
 import {CSS} from '@dnd-kit/utilities';
+import {HTMLAttributes} from "react";
+import {CardComponent} from "./CardComponent";
 
-export function SortableCard({card, id}: { card: Card, id: number }) {
+export function SortableCard({card, id, onclick, ...props}: {
+    card: Card,
+    id: number
+    onclick?: () => void
+} & Omit<HTMLAttributes<HTMLDivElement>, "id">) {
     const {
         attributes,
         listeners,
@@ -17,8 +23,8 @@ export function SortableCard({card, id}: { card: Card, id: number }) {
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            {CardNames.get(card)}
+        <div {...props}>
+            <CardComponent ref={setNodeRef} style={style} card={card} {...attributes} {...listeners} onClick={onclick}/>
         </div>
     );
 }

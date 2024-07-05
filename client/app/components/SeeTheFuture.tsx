@@ -9,7 +9,12 @@ import {
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
-import {arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy,} from '@dnd-kit/sortable';
+import {
+    arrayMove,
+    horizontalListSortingStrategy,
+    SortableContext,
+    sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import {SortableCard} from "./SortableCard";
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import {TurnState} from "../../../server/shared/util";
@@ -23,7 +28,7 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
 
     let alter = turnState === TurnState.AlteringTheFuture;
 
-    let [indices, setIndices] = useState([1,2,3]);
+    let [indices, setIndices] = useState([1, 2, 3]);
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -48,28 +53,31 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
 
     return (
         <>
-            <DndContext
-                sensors={sensors}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={indices}
-                    strategy={verticalListSortingStrategy}
-                    disabled={!alter}
+            <div className={"flex flex-row"}>
+                <DndContext
+                    sensors={sensors}
+                    onDragEnd={handleDragEnd}
                 >
-                    {indices.map((index) => (
-                        <SortableCard key={index} card={theFuture[index-1]} id={index}/>
-                    ))}
-                </SortableContext>
-            </DndContext>
+                    <SortableContext
+                        items={indices}
+                        strategy={horizontalListSortingStrategy}
+                        disabled={!alter}
+                    >
+                        {indices.map((index) => (
+                            <SortableCard key={index} card={theFuture[index - 1]} id={index}/>
+                        ))}
+                    </SortableContext>
+                </DndContext>
+            </div>
 
             <button onClick={() => {
                 if (alter) {
-                    room.send("alterTheFuture", {cards: indices.map(index => theFuture[index-1])})
+                    room.send("alterTheFuture", {cards: indices.map(index => theFuture[index - 1])})
                 }
                 callback();
-            }}>OK!</button>
-            <p>{indices.map(index => theFuture[index-1  ]).join(",")}</p>
+            }}>OK!
+            </button>
+            <p>{indices.map(index => theFuture[index - 1]).join(",")}</p>
         </>
     )
 }
