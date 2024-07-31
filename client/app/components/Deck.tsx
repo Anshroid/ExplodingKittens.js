@@ -14,6 +14,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let cardsInDeck = useColyseusState(state => state.deckLength);
     let [lastCardsInDeck, setLastCardsInDeck] = useState(0);
 
+    console.log(drawing)
+
     if (lastCardsInDeck !== cardsInDeck) {
         setLastCardsInDeck(cardsInDeck);
 
@@ -24,8 +26,10 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     }
 
     let [shufflePositions, setShufflePositions] = useState(new Array(cardsInDeck).fill(0).map(_ => [0, 0]));
-
     let randomOffsets = useRef(new Array(cardsInDeck).fill(0).map(_ => [Math.random() * 3, Math.random() * 3]));
+
+    let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
+    let implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
 
     return (
         <div className="relative flex flex-col place-items-center">
@@ -41,29 +45,30 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                 }
             }}>
                 {new Array(cardsInDeck - 1).fill(0).map((_, i) => (
-                    <CardComponent card={Card.TACOCAT} style={{
+                    <CardComponent card={i === implosionIndex ? Card.IMPLODING : Card.BACK} style={{
                         transform: `rotate3d(1,0,0,${angleX}deg) 
                                     rotate3d(0,0,1,${angleZ + i * angleZOffset}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)
                                     translate3d(${shufflePositions[i].join("px, ")}px, ${i * 1.5}px)`,
                         perspective: "1000px"
-                    }} className={"absolute transition-transform"} key={i}/>
+                    }} className={"absolute transition-transform border-[1px] border-[#f5e7d9]"} key={i}/>
                 ))}
 
-                <CardComponent card={Card.TACOCAT}
+                <CardComponent card={distanceToImplosion === 0 ? Card.IMPLODING : Card.BACK}
                                style={{
                                    transform: `rotate3d(1,0,0,${drawing ? 0 : angleX}deg) 
-                                               rotate3d(0,0,1,${drawing ? 0 : angleZ + (cardsInDeck - 1) * angleZOffset}deg) 
-                                               translate3d(${shufflePositions[cardsInDeck - 1][0]}px, ${shufflePositions[cardsInDeck - 1][1]}px, ${(cardsInDeck - 1) * 1.5}px)
-                                               translate3d(${topCardTranslate.join("px, ")}px)`,
+                                   rotate3d(0,0,1,${drawing ? 0 : angleZ + (cardsInDeck - 1) * angleZOffset}deg) 
+                                   translate3d(${shufflePositions[cardsInDeck - 1][0]}px, ${shufflePositions[cardsInDeck - 1][1]}px, ${(cardsInDeck - 1) * 1.5}px)
+                                   translate3d(${topCardTranslate.join("px, ")}px)`,
                                    perspective: "1000px"
                                }}
-                               className={"absolute " + (suspendTransition ? "" : "transition-transform ") + (drawDisabled ? "" : "cursor-pointer")}
+                               className={"absolute border-[1px] border-[#f5e7d9] " + (suspendTransition ? "" : "transition-transform ") + (drawDisabled ? "" : "cursor-pointer")}
                                onMouseOver={() => {
                                    if (!drawDisabled && !drawing) setTopCardTranslate([0, 0, 10])
-                               }} onMouseOut={() => {
-                    if (!drawing) setTopCardTranslate([0, 0, 0])
-                }}
+                               }}
+                               onMouseOut={() => {
+                                   if (!drawing) setTopCardTranslate([0, 0, 0])
+                               }}
 
                                onClick={() => {
                                    if (drawDisabled) return;

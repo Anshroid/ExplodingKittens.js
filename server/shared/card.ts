@@ -12,6 +12,7 @@ export enum Card {
     SHUFFLE,
     SKIP,
     SEETHEFUTURE,
+    BACK,
 
 // Imploding Kittens expansion
     IMPLODING,
@@ -36,6 +37,7 @@ export const CardNames = new Map<Card, string>([ // TODO: remove this when we ha
     [Card.SHUFFLE, "Shuffle"],
     [Card.SKIP, "Skip"],
     [Card.SEETHEFUTURE, "See the Future"],
+    [Card.BACK, "Card Back Art"],
 
     [Card.IMPLODING, "Imploding Kitten"],
     [Card.REVERSE, "Reverse"],

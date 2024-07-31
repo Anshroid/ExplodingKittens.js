@@ -59,17 +59,22 @@ export default function CardsList({cards, selectedCardMask, setSelectedCardMask,
         setActiveId(null);
     }
 
-    let [handSizeMargin, setHandSizeMargin] = useState(0);
-    useEffect(() => {
-        const handleResize = () => {
-            if (cards.length * 144 > 0.8 * window.innerWidth) {
-                let excess = 0.8 * window.innerWidth - cards.length * 144;
-                let gaps = cards.length - 1;
-                let removePerGap = excess / gaps;
-                setHandSizeMargin(removePerGap / 2);
-            }
-        }
+    let [handSizeMargin, setHandSizeMargin] = useState(1);
 
+    const handleResize = () => {
+        console.log(cards.length*144, window.innerWidth*0.8)
+
+        if (cards.length * 144 > 0.8 * window.innerWidth) {
+            let excess = 0.8 * window.innerWidth - cards.length * 144;
+            let gaps = cards.length - 1;
+            let removePerGap = excess / gaps;
+            setHandSizeMargin(removePerGap / 2);
+        } else {
+            setHandSizeMargin(1);
+        }
+    }
+
+    useEffect(() => {
         window.addEventListener("resize", handleResize);
 
         return () => {
@@ -77,8 +82,14 @@ export default function CardsList({cards, selectedCardMask, setSelectedCardMask,
         }
     }, []);
 
+    let [prevLength, setPrevLength] = useState(0);
+    if (prevLength !== cards.length) {
+        setPrevLength(cards.length);
+        handleResize();
+    }
+
     return (
-        <div className={"flex flex-row"}>
+        <div className={"flex flex-row justify-center"}>
             <DndContext
                 sensors={sensors}
                 onDragStart={handleDragStart}
