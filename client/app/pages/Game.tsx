@@ -155,7 +155,8 @@ export default function Game() {
 
                     <br/>
 
-                    <Deck drawCallback={() => room.send("drawCard")} drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
+                    <Deck drawCallback={() => room.send("drawCard")}
+                          drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
 
                     <button onClick={() => {
                         if ((selectedCardMask.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {

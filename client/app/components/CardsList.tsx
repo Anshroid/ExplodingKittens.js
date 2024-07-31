@@ -76,11 +76,11 @@ export default function CardsList({cards, selectedCardMask, setSelectedCardMask,
                             newSelectedCardMask[index - 1] = !selectedCardMask[index - 1];
                             setSelectedCardMask(newSelectedCardMask);
                         }}
-                                      className={(selectedCardMask[index - 1] ? "-translate-y-3 transition-transform" : "transition-transform") + " " + (activeId === index ? "opacity-30" : "")} />
+                                      className={"transition-transform " + (selectedCardMask[index - 1] ? "-translate-y-3" : "") + " " + (activeId === index ? "opacity-30" : "")}/>
                     ))}
                 </SortableContext>
                 <DragOverlay>
-                    {activeId ? <CardComponent card={cards[activeId - 1]} /> : null}
+                    {activeId ? <CardComponent card={cards[activeId - 1]}/> : null}
                 </DragOverlay>
             </DndContext>
         </div>

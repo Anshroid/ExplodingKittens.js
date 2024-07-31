@@ -12,7 +12,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "useDefineForClassFields": false,
-    "types": ["mocha"]
+    "types": ["mocha"],
+    "lib": ["ES2023"]
   },
   "include": [
     "src"
