@@ -4,6 +4,7 @@ import CardsList from "../components/CardsList";
 import {Card, CardNames} from "../../../server/shared/card";
 import {isCatCard, TurnState} from "../../../server/shared/util";
 import {GameModal} from "../components/GameModal";
+import Deck from "../components/Deck";
 
 export default function Game() {
     // let {auth, discordSDK} = useContext(DiscordSDKContext);
@@ -153,6 +154,9 @@ export default function Game() {
                     <p>Discard pile: {discard.map(card => CardNames.get(card)).join(", ")}</p>
 
                     <br/>
+
+                    <Deck drawCallback={() => room.send("drawCard")} drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
+
                     <button onClick={() => {
                         if ((selectedCardMask.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {
                             switch (selectedCards.length) {
@@ -173,12 +177,6 @@ export default function Game() {
                     }}
                             disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
                             className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
-                    </button>
-
-                    <button onClick={() => {
-                        room.send("drawCard")
-                    }} disabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
-                            className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-blue-800" : "bg-blue-400")}>Draw!
                     </button>
 
                     <button onClick={() => {
