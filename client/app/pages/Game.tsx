@@ -23,11 +23,10 @@ export default function Game() {
     let cards = players.at(ourIndex)?.cards;
     if (cards === undefined) return;
 
-
     let [selectedCardMask, setSelectedCardMask] = useState<Array<boolean>>([]);
     let [cardOrder, setCardOrder] = useState<Array<number>>([]);
     let [prevCards, setPrevCards] = useState<Array<Card>>([]);
-    if (!cards.toJSON().every((card, index) => prevCards[index] === card)) {
+    if (cards.toJSON().length !== prevCards.length || !cards.toJSON().every((card, index) => prevCards[index] === card)) {
         let newCardOrder = structuredClone(cardOrder);
         if (prevCards.length > cards.length) { // Cards removed
             let removedIndices: number[] = [];
@@ -65,8 +64,7 @@ export default function Game() {
         // Listen to schema changes
         listeners.push(
             room.state.listen("turnState", (currentValue) => {
-                // console.log(currentValue, turnIndex, ourIndex) TODO: fix #3
-                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && (turnIndex === ourIndex)) {
+                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && (room.state.turnIndex === ourIndex)) {
                     setCurrentModal("choosePosition");
                 }
 
@@ -75,7 +73,7 @@ export default function Game() {
                         room.send("returnToLobby");
                     }, 5000);
                 }
-            }),
+            }, true),
 
             room.state.listen("ownerId", (currentValue) => {
                 if (currentValue === room.sessionId && turnState === TurnState.GameOver) {
