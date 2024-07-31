@@ -33,6 +33,7 @@ export default config({
                 }),
             });
 
+            // @ts-ignore
             const {access_token} = await response.json();
 
             res.send({access_token});
