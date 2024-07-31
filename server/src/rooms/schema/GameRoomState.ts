@@ -45,6 +45,7 @@ export class GameRoomState extends Schema {
     @type("number") turnOrder: number = 1;
     @type("number") turnState: TurnState = TurnState.Normal;
     @type(["number"]) discard = new ArraySchema<Card>();
+    @type("number") deckLength: number = 0;
 
     // Imploding kitten state
     @type("boolean") implosionRevealed: boolean = false;

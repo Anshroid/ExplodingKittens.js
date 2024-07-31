@@ -14,7 +14,7 @@ import {
     sortableKeyboardCoordinates
 } from "@dnd-kit/sortable";
 import {SortableCard} from "./SortableCard";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {CardComponent} from "./CardComponent";
 
 export default function CardsList({cards, selectedCardMask, setSelectedCardMask, cardOrder, setCardOrder}: {
@@ -59,8 +59,35 @@ export default function CardsList({cards, selectedCardMask, setSelectedCardMask,
         setActiveId(null);
     }
 
+    let [handSizeMargin, setHandSizeMargin] = useState(1);
+
+    const handleResize = () => {
+        if (cards.length * 144 > 0.8 * window.innerWidth) {
+            let excess = 0.8 * window.innerWidth - cards.length * 144;
+            let gaps = cards.length - 1;
+            let removePerGap = excess / gaps;
+            setHandSizeMargin(removePerGap / 2);
+        } else {
+            setHandSizeMargin(1);
+        }
+    }
+
+    useEffect(() => {
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        }
+    }, []);
+
+    let [prevLength, setPrevLength] = useState(0);
+    if (prevLength !== cards.length) {
+        setPrevLength(cards.length);
+        handleResize();
+    }
+
     return (
-        <div className={"flex flex-row"}>
+        <div className={"flex flex-row justify-center"}>
             <DndContext
                 sensors={sensors}
                 onDragStart={handleDragStart}
@@ -76,11 +103,16 @@ export default function CardsList({cards, selectedCardMask, setSelectedCardMask,
                             newSelectedCardMask[index - 1] = !selectedCardMask[index - 1];
                             setSelectedCardMask(newSelectedCardMask);
                         }}
-                                      className={(selectedCardMask[index - 1] ? "-translate-y-3 transition-transform" : "transition-transform") + " " + (activeId === index ? "opacity-30" : "")} />
+                                      className={"transition-transform " + (selectedCardMask[index - 1] ? "-translate-y-3" : "") + " " + (activeId === index ? "opacity-30" : "")}
+                                      style={{
+                                          marginLeft: handSizeMargin,
+                                          marginRight: handSizeMargin,
+                                      }}
+                        />
                     ))}
                 </SortableContext>
                 <DragOverlay>
-                    {activeId ? <CardComponent card={cards[activeId - 1]} /> : null}
+                    {activeId ? <CardComponent card={cards[activeId - 1]}/> : null}
                 </DragOverlay>
             </DndContext>
         </div>

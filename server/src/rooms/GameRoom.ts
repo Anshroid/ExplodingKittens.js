@@ -84,6 +84,7 @@ export class GameRoom extends Room<GameRoomState> {
             );
 
             shuffleArray(this.state.deck);
+            this.state.deckLength = this.state.deck.length;
 
             this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
 
@@ -95,6 +96,7 @@ export class GameRoom extends Room<GameRoomState> {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
 
             let card = this.state.deck.shift();
+            this.state.deckLength = this.state.deck.length;
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
             this.state.players.at(this.state.turnIndex).cards.push(card);
             if (this.checkDeath(card)) return;
@@ -138,6 +140,7 @@ export class GameRoom extends Room<GameRoomState> {
 
                     case Card.DRAWFROMBOTTOM:
                         let card = this.state.deck.pop();
+                        this.state.deckLength = this.state.deck.length;
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
                         this.state.players.at(this.state.turnIndex).cards.push(card);
                         if (this.checkDeath(card)) return;
@@ -281,6 +284,7 @@ export class GameRoom extends Room<GameRoomState> {
             this.log("Choosing position: index " + message.index)
 
             this.state.deck.splice(message.index, 0, this.state.turnState === TurnState.ChoosingImplodingPosition ? Card.IMPLODING : Card.EXPLODING);
+            this.state.deckLength = this.state.deck.length;
 
             this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
             this.state.turnState = TurnState.Normal;
@@ -299,6 +303,7 @@ export class GameRoom extends Room<GameRoomState> {
 
             this.state.started = false;
             this.state.deck = [];
+            this.state.deckLength = this.state.deck.length;
             this.state.turnIndex = 0;
             this.state.turnCount = 0;
             this.state.turnRepeats = 1;
