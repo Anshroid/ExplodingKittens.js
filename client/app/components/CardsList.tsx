@@ -62,8 +62,6 @@ export default function CardsList({cards, selectedCardMask, setSelectedCardMask,
     let [handSizeMargin, setHandSizeMargin] = useState(1);
 
     const handleResize = () => {
-        console.log(cards.length*144, window.innerWidth*0.8)
-
         if (cards.length * 144 > 0.8 * window.innerWidth) {
             let excess = 0.8 * window.innerWidth - cards.length * 144;
             let gaps = cards.length - 1;

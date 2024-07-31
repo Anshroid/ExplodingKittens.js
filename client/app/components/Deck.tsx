@@ -14,7 +14,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let cardsInDeck = useColyseusState(state => state.deckLength);
     let [lastCardsInDeck, setLastCardsInDeck] = useState(0);
 
-    console.log(drawing)
+    if (!cardsInDeck) return;
 
     if (lastCardsInDeck !== cardsInDeck) {
         setLastCardsInDeck(cardsInDeck);
