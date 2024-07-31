@@ -72,7 +72,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                                    setTopCardTranslate([0, 0, 0]);
 
                                    setTimeout(() => {
-                                       setTopCardTranslate([0, visualViewport.height * 0.8, 0]);
+                                       setTopCardTranslate([0, window.innerHeight * 0.8, 0]);
                                    }, 300)
 
                                    setTimeout(() => {
@@ -98,15 +98,15 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
 
         for (let i = 0; i < cardsInDeck; i++) {
             setTimeout(() => {
-                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * visualViewport.width), (Math.random() - 0.5) * (0.6 * visualViewport.height)]))
+                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
             }, 200 + i * 10)
 
             setTimeout(() => {
-                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * visualViewport.width), (Math.random() - 0.5) * (0.6 * visualViewport.height)]))
+                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
             }, 500 + i * 10)
 
             setTimeout(() => {
-                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * visualViewport.width), (Math.random() - 0.5) * (0.6 * visualViewport.height)]))
+                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
             }, 800 + i * 10)
 
             setTimeout(() => {
