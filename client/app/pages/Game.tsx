@@ -143,9 +143,15 @@ export default function Game() {
                        theFuture={theFuture}/>
             <div className={"flex items-center text-center justify-center h-full"}>
                 <div className={"justify-center flex-none"}>
-                    <CardsList cards={cards} selectedCardMask={selectedCardMask}
-                               setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
-                               setCardOrder={setCardOrder}/>
+                    <div>
+                        <h3 className={"font-bold"}>Debug information</h3>
+                        <p>Turn state: {turnState}</p>
+                    </div>
+                    <br/>
+
+                    <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                    <p>Discard pile: {discard.map(card => CardNames.get(card)).join(", ")}</p>
+
                     <br/>
                     <button onClick={() => {
                         if ((selectedCardMask.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0]) || selectedCards.length > 1)) {
@@ -170,12 +176,6 @@ export default function Game() {
                     </button>
 
                     <button onClick={() => {
-                        // console.log(currentModal);
-                        // if (currentModal === "targetPlayer") {
-                        //     setCurrentModal("");
-                        //     return;
-                        // }
-                        // setCurrentModal("targetPlayer")
                         room.send("drawCard")
                     }} disabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
                             className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-blue-800" : "bg-blue-400")}>Draw!
@@ -186,18 +186,11 @@ export default function Game() {
                     }} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}
                             className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!
                     </button>
-
                     <br/>
-
-                    <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
-                    <p>Discard pile: {discard.map(card => CardNames.get(card)).join(", ")}</p>
-
                     <br/>
-                    <div>
-                        <h3 className={"font-bold"}>Debug information</h3>
-                        <p>Turn state: {turnState}</p>
-                        <p>Player index map: {JSON.stringify(playerIndexMap.toJSON())}</p>
-                    </div>
+                    <CardsList cards={cards} selectedCardMask={selectedCardMask}
+                               setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
+                               setCardOrder={setCardOrder}/>
                 </div>
             </div>
         </>
