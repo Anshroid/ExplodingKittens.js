@@ -97,7 +97,7 @@ export default function Game() {
         }
     }, [turnIndex, ownerId]);
 
-    function cardCallback(targetSessionId?: string, targetCard?: Card, targetIndex?: number) {
+    function cardCallback(targetSessionId?: string, targetCard?: Card) {
         if (!room || !playerIndexMap) return;
 
         switch (selectedCards.length) {
@@ -122,8 +122,8 @@ export default function Game() {
                 });
                 break;
             case 5:
-                if (!targetIndex) return;
-                room.send("playCombo", {cards: selectedCards, targetIndex: targetIndex});
+                if (!targetCard) return;
+                room.send("playCombo", {cards: selectedCards, targetCard: targetCard});
                 break;
         }
 

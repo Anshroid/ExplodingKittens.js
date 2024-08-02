@@ -7,7 +7,7 @@ import {Card} from "../../../server/shared/card";
 import {Favour} from "./Favour";
 import {SeeTheFuture} from "./SeeTheFuture";
 
-export function GameModal({type, cardCallback, closeCallback, theFuture}: { type: string, cardCallback: (targetSessionId?: string, targetCard?: Card, targetIndex?: number) => void, closeCallback: () => void, theFuture: Card[]}) {
+export function GameModal({type, cardCallback, closeCallback, theFuture}: { type: string, cardCallback: (targetSessionId?: string, targetCard?: Card) => void, closeCallback: () => void, theFuture: Card[]}) {
     let [tempPlayerStorage, setTempPlayerStorage] = useState<string>("");
 
     return (
@@ -51,7 +51,7 @@ export function GameModal({type, cardCallback, closeCallback, theFuture}: { type
                                             case "targetCard":
                                                 return <TargetCard callback={cardId => cardCallback(tempPlayerStorage, cardId)}/>
                                             case "targetDiscard":
-                                                return <TargetDiscard callback={index => cardCallback(undefined, undefined, index)}/>
+                                                return <TargetDiscard callback={card => cardCallback(undefined, card)}/>
                                             case "choosePosition":
                                                 return <ChoosePosition callback={closeCallback}/>
                                             case "favour":

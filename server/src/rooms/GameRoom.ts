@@ -111,7 +111,8 @@ export class GameRoom extends Room<GameRoomState> {
 
             this.state.discard.push(message.card);
 
-            // TODO: do they know what's happened?
+            if ([Card.FAVOUR, Card.TARGETEDATTACK].includes(message.card)) this.broadcast("cardTarget", {target: message.target});
+
             this.processNopeQTE(() => {
                 switch (message.card) {
                     case Card.ATTACK:
@@ -182,7 +183,6 @@ export class GameRoom extends Room<GameRoomState> {
             cards: Array<Card>,
             target?: number,
             targetCard?: Card,
-            targetIndex?: number
         }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
 
@@ -192,6 +192,8 @@ export class GameRoom extends Room<GameRoomState> {
             }
 
             this.log("Player " + client.sessionId + " playing " + message.cards.map(card => CardNames.get(card)) + " target " + message.target);
+
+            this.broadcast("comboTarget", {numCards: message.cards.length, ...message});
 
             this.processNopeQTE(() => {
                 switch (message.cards.length) {
@@ -230,15 +232,14 @@ export class GameRoom extends Room<GameRoomState> {
                             break;
                         }
 
-                        if (message.targetIndex >= this.state.discard.length) {
+                        if (!this.state.discard.includes(message.targetCard)) {
                             this.log("Invalid choice!");
                             break;
                         }
 
-                        let card = this.state.discard.at(message.targetIndex)
-                        this.state.discard.deleteAt(this.state.discard.indexOf(card));
-                        this.state.players.at(this.state.turnIndex).cards.push(card);
-                        this.checkDeath(card)
+                        this.state.discard.deleteAt(this.state.discard.indexOf(message.targetCard));
+                        this.state.players.at(this.state.turnIndex).cards.push(message.targetCard);
+                        this.checkDeath(message.targetCard)
                         break;
 
                     default:
