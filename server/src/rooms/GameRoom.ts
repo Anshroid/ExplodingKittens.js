@@ -127,6 +127,7 @@ export class GameRoom extends Room<GameRoomState> {
                     case Card.SHUFFLE:
                         shuffleArray(this.state.deck);
                         this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
+                        this.broadcast("shuffled")
                         break;
 
                     case Card.SKIP:
@@ -376,18 +377,21 @@ export class GameRoom extends Room<GameRoomState> {
 
     checkDeath(card: Card) {
         if (card === Card.IMPLODING) {
-            if (!this.state.implosionRevealed) {
-                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
-                this.state.implosionRevealed = true;
-                this.state.turnState = TurnState.ChoosingImplodingPosition
-            } else {
+            if (this.state.implosionRevealed) {
+                this.broadcast("imploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
                 this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
+            } else {
+                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
+                this.state.implosionRevealed = true;
+                this.broadcast("implosionRevealed");
+                this.state.turnState = TurnState.ChoosingImplodingPosition
             }
             return true; // Don't end turn, wait for the response
         } else if (card === Card.EXPLODING) {
             if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
+                this.broadcast("exploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
                 this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);

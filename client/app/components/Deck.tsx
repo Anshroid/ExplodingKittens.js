@@ -1,7 +1,7 @@
 import {CardComponent} from "./CardComponent";
 import {Card} from "../../../server/shared/card";
-import {useRef, useState} from "react";
-import {useColyseusState} from "../utility/contexts";
+import {useEffect, useRef, useState} from "react";
+import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import {
     cardSeparation,
     fanAngleX,
@@ -39,6 +39,15 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
 
     if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
+
+    let room = useColyseusRoom();
+    useEffect(() => {
+        if (room) {
+            room.onMessage("shuffled", () => {
+                shuffle();
+            });
+        }
+    }, []);
 
     return (
         <div className="relative flex flex-col place-items-center">
@@ -107,20 +116,20 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
         setAngleX(0);
         setAngleZ(0);
 
-        randomOffsets.current = new Array(cardsInDeck).fill(0).map(_ => [Math.random() * 3, Math.random() * 3]);
+        randomOffsets.current = new Array(cardsInDeck).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]);
 
 
         for (let i = 0; i < cardsInDeck; i++) {
             setTimeout(() => {
-                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
+                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.6 * window.innerWidth), (Math.random() - 0.5) * (0.8 * window.innerHeight)]))
             }, 200 + i * 10)
 
             setTimeout(() => {
-                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
+                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.6 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
             }, 500 + i * 10)
 
             setTimeout(() => {
-                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.8 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
+                setShufflePositions(current => current.map((pos, idx) => idx !== i ? pos : [(Math.random() - 0.5) * (0.6 * window.innerWidth), (Math.random() - 0.5) * (0.6 * window.innerHeight)]))
             }, 800 + i * 10)
 
             setTimeout(() => {
@@ -129,8 +138,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
         }
 
         setTimeout(() => {
-            setAngleX(80);
-            setAngleZ(25)
+            setAngleX(initialAngleX);
+            setAngleZ(initialAngleZ)
         }, 1200 + cardsInDeck * 10)
     }
 }
