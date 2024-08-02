@@ -52,10 +52,6 @@ export default function Game() {
 
     let selectedCards = cards.filter((_, index) => selectedCardMask[index]);
 
-    useEffect(() => {
-        console.log("Now selected: ", selectedCards);
-    }, [selectedCardMask]);
-
     let [currentModal, setCurrentModal] = useState("");
     let [theFuture, setTheFuture] = useState<Card[]>([])
 
