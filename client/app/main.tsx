@@ -6,6 +6,7 @@ import './index.css'
 import {DiscordSDK} from "@discord/embedded-app-sdk";
 import {client, DiscordSDKContext, DiscordSDKContextType, setCurrentRoom} from "./utility/contexts";
 import {GameRoomState} from "../../server/src/rooms/schema/GameRoomState";
+import { Room } from "colyseus.js";
 
 const discordSDK = new DiscordSDK("1248976494152122419");
 
@@ -26,7 +27,7 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
     };
 
     (async () => {
-        let room;
+        let room: Room<GameRoomState>;
         try {
             room = await client.joinById<GameRoomState>(instanceId, joinOptions)
             await setCurrentRoom(room);

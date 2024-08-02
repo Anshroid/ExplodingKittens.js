@@ -1,10 +1,11 @@
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import {useEffect, useState} from "react";
 import CardsList from "../components/CardsList";
-import {Card, CardNames} from "../../../server/shared/card";
+import {Card} from "../../../server/shared/card";
 import {isCatCard, TurnState} from "../../../server/shared/util";
 import {GameModal} from "../components/GameModal";
 import Deck from "../components/Deck";
+import Discard from "../components/Discard";
 
 export default function Game() {
     // let {auth, discordSDK} = useContext(DiscordSDKContext);
@@ -15,7 +16,6 @@ export default function Game() {
     let players = useColyseusState(state => state.players);
     let ownerId = useColyseusState(state => state.ownerId);
     let turnRepeats = useColyseusState(state => state.turnRepeats);
-    let discard = useColyseusState(state => state.discard);
 
     if (room === undefined || turnState === undefined || turnIndex === undefined || playerIndexMap === undefined || players == undefined) return;
 
@@ -149,12 +149,15 @@ export default function Game() {
                     <br/>
 
                     <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
-                    <p>Discard pile: {discard.map(card => CardNames.get(card)).join(", ")}</p>
 
                     <br/>
 
-                    <Deck drawCallback={() => room.send("drawCard")}
-                          drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
+                    <div className={"flex flex-row justify-center gap-20"}>
+                        <Deck drawCallback={() => room.send("drawCard")}
+                              drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
+
+                        <Discard/>
+                    </div>
 
                     <button onClick={() => {
                         if (((selectedCards.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0])) || selectedCards.length > 1)) {
