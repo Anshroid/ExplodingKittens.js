@@ -14,8 +14,6 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let cardsInDeck = useColyseusState(state => state.deckLength);
     let [lastCardsInDeck, setLastCardsInDeck] = useState(0);
 
-    if (!cardsInDeck) return;
-
     if (lastCardsInDeck !== cardsInDeck) {
         setLastCardsInDeck(cardsInDeck);
 
@@ -30,6 +28,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
 
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
     let implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
+
+    if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-40 w-40"/>;
 
     return (
         <div className="relative flex flex-col place-items-center">

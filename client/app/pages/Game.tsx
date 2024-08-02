@@ -65,7 +65,7 @@ export default function Game() {
         // Listen to schema changes
         listeners.push(
             room.state.listen("turnState", (currentValue) => {
-                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && (room.state.turnIndex === ourIndex)) {
+                if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && (turnIndex === ourIndex)) {
                     setCurrentModal("choosePosition");
                 }
 
@@ -99,7 +99,7 @@ export default function Game() {
                 removeCallback()
             });
         }
-    }, []);
+    }, [turnIndex, ownerId]);
 
     function cardCallback(targetSessionId?: string, targetCard?: Card, targetIndex?: number) {
         if (!room || !playerIndexMap) return;
