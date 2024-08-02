@@ -142,12 +142,7 @@ export default function Game() {
                        theFuture={theFuture}/>
             <div className={"flex items-center text-center justify-center h-full"}>
                 <div className={"justify-center flex-none"}>
-                    <div>
-                        <h3 className={"font-bold"}>Debug information</h3>
-                        <p>Turn state: {turnState}</p>
-                    </div>
-                    <br/>
-
+                    <p>Turn state: {turnState}</p>
                     <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
 
                     <br/>

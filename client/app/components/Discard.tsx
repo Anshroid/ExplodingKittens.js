@@ -46,7 +46,7 @@ export default function Discard() {
                                     rotate3d(0,0,1,${angleZOffset ? initialAngleZ + i * angleZOffset : randomRotations.current[i]}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, ${i * cardSeparation}px)`,
                         perspective: "1000px"
-                    }} className={"absolute transition-transform duration-300 border-[1px] border-[#f5e7d9] card-fall"} key={i}/>
+                    }} className={"absolute transition-transform border-[1px] border-[#f5e7d9] card-fall"} key={i}/>
                 ))}
             </div>
         </div>
