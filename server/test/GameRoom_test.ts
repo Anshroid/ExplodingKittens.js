@@ -591,7 +591,7 @@ describe("game actions", () => {
 
             clients[0].send("playCombo", {
                 cards: [Card.TACOCAT, Card.CATTERMELON, Card.RAINBOWCAT, Card.BEARDCAT, Card.POTATOCAT],
-                targetIndex: 1
+                targetCard: Card.FAVOUR
             });
             await waitForNopeCooldown(room);
 
