@@ -23,7 +23,7 @@ export enum Card {
     TARGETEDATTACK,
 }
 
-export const CardNames = new Map<Card, string>([ // TODO: remove this when we have a better solution
+export const CardNames = new Map<Card, string>([
     [Card.EXPLODING, "Exploding Kitten"],
     [Card.DEFUSE, "Defuse"],
     [Card.TACOCAT, "Tacocat"],

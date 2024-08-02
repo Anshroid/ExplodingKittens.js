@@ -1,16 +1,15 @@
 import {useColyseusState} from "../utility/contexts";
-import {CardNames} from "../../../server/shared/card";
+import {Card} from "../../../server/shared/card";
+import {CardComponent} from "./CardComponent";
 
-export function TargetDiscard({callback}: {callback: (targetIndex: number) => void}) {
+export function TargetDiscard({callback}: { callback: (targetCard: Card) => void }) {
     let discard = useColyseusState(state => state.discard);
     if (discard === undefined) return;
 
     return (
         <ul>
             {discard.map((card, index) =>
-                <li key={index}>
-                    <button onClick={() => callback(index)}>{CardNames.get(card)}</button>
-                </li>
+                <button onClick={() => callback(card)}><CardComponent card={card} key={index}/></button>
             )}
         </ul>
     );

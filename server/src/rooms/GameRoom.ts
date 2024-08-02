@@ -111,7 +111,8 @@ export class GameRoom extends Room<GameRoomState> {
 
             this.state.discard.push(message.card);
 
-            // TODO: do they know what's happened?
+            if ([Card.FAVOUR, Card.TARGETEDATTACK].includes(message.card)) this.broadcast("cardTarget", {target: message.target});
+
             this.processNopeQTE(() => {
                 switch (message.card) {
                     case Card.ATTACK:
@@ -127,6 +128,7 @@ export class GameRoom extends Room<GameRoomState> {
                     case Card.SHUFFLE:
                         shuffleArray(this.state.deck);
                         this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
+                        this.broadcast("shuffled")
                         break;
 
                     case Card.SKIP:
@@ -181,7 +183,6 @@ export class GameRoom extends Room<GameRoomState> {
             cards: Array<Card>,
             target?: number,
             targetCard?: Card,
-            targetIndex?: number
         }) => {
             if (!this.state.started || this.state.turnIndex !== client.userData.playerIndex || this.state.turnState !== TurnState.Normal) return;
 
@@ -191,6 +192,8 @@ export class GameRoom extends Room<GameRoomState> {
             }
 
             this.log("Player " + client.sessionId + " playing " + message.cards.map(card => CardNames.get(card)) + " target " + message.target);
+
+            this.broadcast("comboTarget", {numCards: message.cards.length, ...message});
 
             this.processNopeQTE(() => {
                 switch (message.cards.length) {
@@ -229,15 +232,14 @@ export class GameRoom extends Room<GameRoomState> {
                             break;
                         }
 
-                        if (message.targetIndex >= this.state.discard.length) {
+                        if (!this.state.discard.includes(message.targetCard)) {
                             this.log("Invalid choice!");
                             break;
                         }
 
-                        let card = this.state.discard.at(message.targetIndex)
-                        this.state.discard.deleteAt(this.state.discard.indexOf(card));
-                        this.state.players.at(this.state.turnIndex).cards.push(card);
-                        this.checkDeath(card)
+                        this.state.discard.deleteAt(this.state.discard.indexOf(message.targetCard));
+                        this.state.players.at(this.state.turnIndex).cards.push(message.targetCard);
+                        this.checkDeath(message.targetCard)
                         break;
 
                     default:
@@ -376,18 +378,21 @@ export class GameRoom extends Room<GameRoomState> {
 
     checkDeath(card: Card) {
         if (card === Card.IMPLODING) {
-            if (!this.state.implosionRevealed) {
-                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
-                this.state.implosionRevealed = true;
-                this.state.turnState = TurnState.ChoosingImplodingPosition
-            } else {
+            if (this.state.implosionRevealed) {
+                this.broadcast("imploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
                 this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
+            } else {
+                this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
+                this.state.implosionRevealed = true;
+                this.broadcast("implosionRevealed");
+                this.state.turnState = TurnState.ChoosingImplodingPosition
             }
             return true; // Don't end turn, wait for the response
         } else if (card === Card.EXPLODING) {
             if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
+                this.broadcast("exploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
                 this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
