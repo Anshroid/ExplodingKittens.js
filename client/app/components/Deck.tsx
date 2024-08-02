@@ -50,65 +50,63 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     }, []);
 
     return (
-        <div className="relative flex flex-col place-items-center">
-            <div className={"h-60 w-60 p-12"} onMouseOver={() => {
-                if (cardsInDeck < fanLimit) {
-                    setAngleX(fanAngleX);
-                    setAngleZOffset(fanAngleZOffset);
-                }
-            }} onMouseOut={() => {
-                if (cardsInDeck < fanLimit) {
-                    setAngleX(initialAngleX);
-                    setAngleZOffset(0);
-                }
-            }}>
-                {new Array(cardsInDeck - 1).fill(0).map((_, i) => (
-                    <CardComponent card={i === implosionIndex ? Card.IMPLODING : Card.BACK} style={{
-                        transform: `rotate3d(1,0,0,${angleX}deg) 
+        <div className={"h-60 w-60 p-12"} onMouseOver={() => {
+            if (cardsInDeck < fanLimit) {
+                setAngleX(fanAngleX);
+                setAngleZOffset(fanAngleZOffset);
+            }
+        }} onMouseOut={() => {
+            if (cardsInDeck < fanLimit) {
+                setAngleX(initialAngleX);
+                setAngleZOffset(0);
+            }
+        }}>
+            {new Array(cardsInDeck - 1).fill(0).map((_, i) => (
+                <CardComponent card={i === implosionIndex ? Card.IMPLODING : Card.BACK} style={{
+                    transform: `rotate3d(1,0,0,${angleX}deg) 
                                     rotate3d(0,0,1,${angleZ + i * angleZOffset}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)
                                     translate3d(${shufflePositions[i].join("px, ")}px, ${i * cardSeparation}px)`,
-                        perspective: "1000px"
-                    }} className={"absolute transition-transform border-[1px] border-[#f5e7d9]"} key={i}/>
-                ))}
+                    perspective: "1000px"
+                }} className={"absolute transition-transform border-[1px] border-[#f5e7d9]"} key={i}/>
+            ))}
 
-                <CardComponent card={distanceToImplosion === 0 ? Card.IMPLODING : Card.BACK}
-                               style={{
-                                   transform: `rotate3d(1,0,0,${drawing ? 0 : angleX}deg) 
+            <CardComponent card={distanceToImplosion === 0 ? Card.IMPLODING : Card.BACK}
+                           style={{
+                               transform: `rotate3d(1,0,0,${drawing ? 0 : angleX}deg) 
                                    rotate3d(0,0,1,${drawing ? 0 : angleZ + (cardsInDeck - 1) * angleZOffset}deg) 
                                    translate3d(${shufflePositions[cardsInDeck - 1][0]}px, ${shufflePositions[cardsInDeck - 1][1]}px, ${(cardsInDeck - 1) * cardSeparation}px)
                                    translate3d(${topCardTranslate.join("px, ")}px)`,
-                                   perspective: "1000px"
-                               }}
-                               className={"absolute border-[1px] border-[#f5e7d9] " + (suspendTransition ? "" : "transition-transform ") + (drawDisabled ? "" : "cursor-pointer")}
-                               onMouseOver={() => {
-                                   if (!drawDisabled && !drawing) setTopCardTranslate([0, 0, topCardHoverZ])
-                               }}
-                               onMouseOut={() => {
-                                   if (!drawing) setTopCardTranslate([0, 0, 0])
-                               }}
+                               perspective: "1000px"
+                           }}
+                           className={"absolute border-[1px] border-[#f5e7d9] " + (suspendTransition ? "" : "transition-transform ") + (drawDisabled ? "" : "cursor-pointer")}
+                           onMouseOver={() => {
+                               if (!drawDisabled && !drawing) setTopCardTranslate([0, 0, topCardHoverZ])
+                           }}
+                           onMouseOut={() => {
+                               if (!drawing) setTopCardTranslate([0, 0, 0])
+                           }}
 
-                               onClick={() => {
-                                   if (drawDisabled) return;
+                           onClick={() => {
+                               if (drawDisabled) return;
 
-                                   setDrawing(true);
-                                   setTopCardTranslate([0, 0, 0]);
+                               setDrawing(true);
+                               setTopCardTranslate([0, 0, 0]);
 
-                                   setTimeout(() => {
-                                       setTopCardTranslate([0, window.innerHeight * 0.8, 0]);
-                                   }, 300)
+                               setTimeout(() => {
+                                   setTopCardTranslate([0, window.innerHeight * 0.8, 0]);
+                               }, 300)
 
-                                   setTimeout(() => {
-                                       setSuspendTransition(true);
-                                       drawCallback();
-                                   }, 700)
+                               setTimeout(() => {
+                                   setSuspendTransition(true);
+                                   drawCallback();
+                               }, 700)
 
-                                   setTimeout(() => {
-                                       setSuspendTransition(false);
-                                   }, 1000) // TODO: automatic?
-                               }}
-                />
-            </div>
+                               setTimeout(() => {
+                                   setSuspendTransition(false);
+                               }, 1000) // TODO: automatic?
+                           }}
+            />
         </div>
     )
 

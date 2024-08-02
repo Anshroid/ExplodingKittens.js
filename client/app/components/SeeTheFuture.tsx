@@ -77,7 +77,6 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
                 callback();
             }}>OK!
             </button>
-            <p>{indices.map(index => theFuture[index - 1]).join(",")}</p>
         </>
     )
 }

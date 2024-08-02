@@ -9,6 +9,7 @@ import {
     initialAngleZ,
     randomOffsetFactor
 } from "../utility/constants";
+import TargetInfobox from "./TargetInfobox";
 
 export default function Discard() {
     let [angleX, setAngleX] = useState(initialAngleX);
@@ -32,23 +33,23 @@ export default function Discard() {
     if (!discard) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
 
     return (
-        <div className="relative flex flex-col place-items-center">
-            <div className={"h-60 w-60 p-12"} onMouseOver={() => {
-                setAngleX(fanAngleX);
-                setAngleZOffset(fanAngleZOffset);
-            }} onMouseOut={() => {
-                setAngleX(initialAngleX);
-                setAngleZOffset(0);
-            }}>
-                {discard.map((card, i) => (
-                    <CardComponent card={card} style={{
-                        transform: `rotate3d(1,0,0,${angleX}deg) 
+        <div className={"h-60 w-60 p-12 relative"} onMouseOver={() => {
+            setAngleX(fanAngleX);
+            setAngleZOffset(fanAngleZOffset);
+        }} onMouseOut={() => {
+            setAngleX(initialAngleX);
+            setAngleZOffset(0);
+        }}>
+            <TargetInfobox/>
+
+            {discard.map((card, i) => (
+                <CardComponent card={card} style={{
+                    transform: `rotate3d(1,0,0,${angleX}deg) 
                                     rotate3d(0,0,1,${angleZOffset ? initialAngleZ + i * angleZOffset : randomRotations.current[i]}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, ${i * cardSeparation}px)`,
-                        perspective: "1000px"
-                    }} className={"absolute transition-transform border-[1px] border-[#f5e7d9] card-fall"} key={i}/>
-                ))}
-            </div>
+                    perspective: "1000px"
+                }} className={"absolute transition-transform border-[1px] border-[#f5e7d9] card-fall"} key={i}/>
+            ))}
         </div>
     )
 }
