@@ -32,6 +32,10 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
         }
     }
 
+    useEffect(() => {
+        if (suspendTransition && !drawing) setTimeout(() => setSuspendTransition(false), 200);
+    }, []);
+
     let [shufflePositions, setShufflePositions] = useState(new Array(cardsInDeck).fill(0).map(_ => [0, 0]));
     let randomOffsets = useRef(new Array(cardsInDeck).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
 
@@ -101,10 +105,6 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                                    setSuspendTransition(true);
                                    drawCallback();
                                }, 700)
-
-                               setTimeout(() => {
-                                   setSuspendTransition(false);
-                               }, 1000) // TODO: automatic?
                            }}
             />
         </div>
