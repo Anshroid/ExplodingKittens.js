@@ -37,10 +37,10 @@ export default function Game() {
                 }
             })
 
-            removedIndices.forEach(removedIndex =>
-                newCardOrder = newCardOrder.filter(elem => elem !== removedIndex + 1).map(elem => elem > removedIndex ? elem - 1 : elem)
-            )
-        } else if (prevCards.length < cards.length) { // Cards added
+            newCardOrder = newCardOrder
+                .filter(elem => !removedIndices.includes(elem - 1))
+                .map(elem => elem - removedIndices.filter(index => elem > index).length)
+        } else if (prevCards.length < cards.toJSON().length) { // Cards added
             cards.slice(prevCards.length).forEach((_, index) => newCardOrder.push(prevCards.length + index + 1));
         }
 
@@ -179,7 +179,7 @@ export default function Game() {
                     </button>
                     <br/>
                     <br/>
-                    <CardsList cards={cards} selectedCardMask={selectedCardMask}
+                    <CardsList cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
                                setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
                                setCardOrder={setCardOrder}/>
                 </div>
