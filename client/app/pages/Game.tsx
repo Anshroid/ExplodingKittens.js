@@ -14,6 +14,7 @@ export default function Game() {
     let turnIndex = useColyseusState(state => state.turnIndex);
     let playerIndexMap = useColyseusState(state => state.playerIndexMap)
     let players = useColyseusState(state => state.players);
+    let spectators = useColyseusState(state => state.spectators);
     let ownerId = useColyseusState(state => state.ownerId);
     let turnRepeats = useColyseusState(state => state.turnRepeats);
 
@@ -21,6 +22,7 @@ export default function Game() {
 
     let ourIndex = playerIndexMap.get(room.sessionId);
     if (ourIndex === undefined) return;
+
     let cards = players.at(ourIndex)?.cards;
     if (cards === undefined) return;
 
@@ -138,6 +140,11 @@ export default function Game() {
                        theFuture={theFuture}/>
             <div className={"flex items-center text-center justify-center h-full"}>
                 <div className={"justify-center flex-none"}>
+                    <p>Players: {players.map(player => player.displayName).join(", ")}</p>
+                    {spectators.length > 0 ? <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
+
+                    <br/>
+
                     <p>Turn state: {turnState}</p>
                     <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
 

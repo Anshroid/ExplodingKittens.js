@@ -327,6 +327,7 @@ export class GameRoom extends Room<GameRoomState> {
         player.sessionId = client.sessionId;
 
         client.userData = {playerIndex: this.state.spectators.length, isSpectator: true};
+        this.state.playerIndexMap.set(client.sessionId, -1);
 
         this.state.spectators.push(player);
     }
@@ -459,5 +460,4 @@ export class GameRoom extends Room<GameRoomState> {
     log(message: string) {
         console.log("[" + this.roomId + "] " + message)
     }
-
 }

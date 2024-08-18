@@ -42,8 +42,6 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
     let implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
 
-    if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
-
     let room = useColyseusRoom();
     useEffect(() => {
         if (room) {
@@ -52,6 +50,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
             });
         }
     }, []);
+
+    if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
 
     return (
         <div className={"h-60 w-60 p-12"} onMouseOver={() => {

@@ -46,7 +46,6 @@ export default config({
         app.use("/colyseus", basicAuthMiddleware, monitor());
     },
 
-
     beforeListen: () => {
         /**
          * Before gameServer.listen() is called.
