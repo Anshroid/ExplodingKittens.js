@@ -304,14 +304,19 @@ export class GameRoom extends Room<GameRoomState> {
             this.updatePlayerIndices();
 
             this.state.started = false;
-            this.state.deck = [];
-            this.state.deckLength = this.state.deck.length;
+
             this.state.turnIndex = 0;
             this.state.turnCount = 0;
             this.state.turnRepeats = 1;
             this.state.turnOrder = 1;
+            this.state.turnState = TurnState.Normal;
+
             this.state.discard.clear();
+
             this.state.implosionRevealed = false;
+
+            this.state.deck = [];
+            this.state.deckLength = this.state.deck.length;
         })
     }
 
