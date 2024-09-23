@@ -24,4 +24,4 @@ export const {
     disconnectFromColyseus,
     useColyseusRoom,
     useColyseusState
-} = colyseus<GameRoomState>('/api');
+} = colyseus<GameRoomState>('/.proxy/api');
