@@ -1,19 +1,10 @@
-import {useColyseusRoom} from "../utility/contexts";
-import {useState} from "react";
+import React from "react";
+import ChoosePositionDeck from "./ChoosePositionDeck";
 
 export function ChoosePosition({callback}: { callback: () => void }) {
-    let room = useColyseusRoom();
-
-    let [value, setValue] = useState(0);
-
     return (
-        <>
-            <input type={"number"} value={value} onChange={e => setValue(e.target.valueAsNumber)} className={"text-black"}/>
-            <button onClick={() => {
-                room?.send("choosePosition", {index: value});
-                callback()
-            }}>Choose
-            </button>
-        </>
+        <div className={"w-full h-full flex justify-center align-middle"}>
+            <ChoosePositionDeck doneCallback={callback}/>
+        </div>
     )
 }

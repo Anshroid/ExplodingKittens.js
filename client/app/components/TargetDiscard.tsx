@@ -9,7 +9,7 @@ export function TargetDiscard({callback}: { callback: (targetCard: Card) => void
     return (
         <ul>
             {discard.map((card, index) =>
-                <button onClick={() => callback(card)}><CardComponent card={card} key={index}/></button>
+                <button onClick={() => callback(card)} key={index}><CardComponent card={card}/></button>
             )}
         </ul>
     );

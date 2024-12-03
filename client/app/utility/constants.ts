@@ -7,3 +7,4 @@ export const fanLimit = 10;
 export const randomOffsetFactor = 3;
 export const cardSeparation = 1.5;
 export const topCardHoverZ = 10;
+export const deckSplitHoverZ = 10;

@@ -23,6 +23,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let cardsInDeck = useColyseusState(state => state.deckLength);
     let [lastCardsInDeck, setLastCardsInDeck] = useState(0);
 
+    if (cardsInDeck == undefined) return;
+
     if (lastCardsInDeck !== cardsInDeck) {
         setLastCardsInDeck(cardsInDeck);
 
@@ -40,7 +42,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let randomOffsets = useRef(new Array(cardsInDeck).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
 
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
-    let implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
+    let implosionIndex: number | undefined = undefined;
+    if (distanceToImplosion != undefined) implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
 
     let room = useColyseusRoom();
     useEffect(() => {
@@ -111,6 +114,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     )
 
     function shuffle() {
+        if (cardsInDeck == undefined) return;
+
         setAngleX(0);
         setAngleZ(0);
 

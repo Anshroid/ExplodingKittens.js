@@ -28,15 +28,15 @@ export function GameModal({type, cardCallback, closeCallback, theFuture}: { type
                                     (() => {
                                         switch (type) {
                                             case "targetPlayer":
-                                                return "Choose a Player!";
+                                                return "Choose a Player to target!";
                                             case "targetCard":
-                                                return "Choose a Card!";
+                                                return "Choose a Card to target!";
                                             case "targetDiscard":
-                                                return "Choose a Card!";
+                                                return "Choose a Card to take!";
                                             case "choosePosition":
-                                                return "Choose a Position!";
+                                                return "You've got an Exploding/Imploding kitten! Choose a Position.";
                                             case "favour":
-                                                return "Choose a Card!";
+                                                return "You've been favoured! Choose a Card to give!";
                                             case "theFuture":
                                                 return "Here's the future!"
                                         }
