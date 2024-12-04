@@ -1,7 +1,13 @@
 import {HTMLAttributes} from "react";
 import ReactSwitch from "react-switch";
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
 
+/**
+ * Displays game settings that can be changed if the player is the owner
+ *
+ * @param props
+ * @constructor
+ */
 export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
     let room = useColyseusRoom();
     let isImplodingEnabled = useColyseusState((state) => state.isImplodingEnabled)

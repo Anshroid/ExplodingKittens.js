@@ -1,6 +1,6 @@
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
-import PlayerList from "../components/PlayerList";
-import SettingsList from "../components/SettingsList";
+import PlayerList from "../components/lobby/PlayerList";
+import SettingsList from "../components/lobby/SettingsList";
 import {useEffect, useRef, useState} from "react";
 
 export default function Lobby() {

@@ -1,10 +1,19 @@
-import {Card} from "../../../server/shared/card";
+import {Card} from "../../../../server/shared/card";
 import {useSortable} from "@dnd-kit/sortable";
 import {CSS} from '@dnd-kit/utilities';
 import {HTMLAttributes} from "react";
-import {CardComponent} from "./CardComponent";
+import CardComponent from "./CardComponent";
 
-export function SortableCard({card, id, onclick, ...props}: {
+/**
+ * A card in a list with the capability to be dragged and dropped to sort.
+ *
+ * @param card The type of card
+ * @param id Unique id passed to the drag handler
+ * @param onclick Callback when the card is clicked
+ * @param props All other props
+ * @constructor
+ */
+export default function SortableCard({card, id, onclick, ...props}: {
     card: Card,
     id: number
     onclick?: () => void

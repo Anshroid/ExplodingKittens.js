@@ -1,10 +1,16 @@
-import {CardComponent} from "./CardComponent";
-import {Card} from "../../../server/shared/card";
+import CardComponent from "../cards/CardComponent";
+import {Card} from "../../../../server/shared/card";
 import {useRef, useState} from "react";
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
-import {cardSeparation, deckSplitHoverZ, initialAngleX, initialAngleZ, randomOffsetFactor} from "../utility/constants";
-import {TurnState} from "../../../server/shared/util";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
+import {cardSeparation, deckSplitHoverZ, initialAngleX, initialAngleZ, randomOffsetFactor} from "../../utility/constants";
+import {TurnState} from "../../../../server/shared/util";
 
+/**
+ * Displays a deck that can be split using the mouse to choose a position. Sends the message to colyseus as well.
+ *
+ * @param doneCallback Function to call when choosing is done
+ * @constructor
+ */
 export default function ChoosePositionDeck({doneCallback}: { doneCallback: () => void }) {
     let cardsInDeck = useColyseusState(state => state.deckLength);
     if (cardsInDeck == undefined) return;

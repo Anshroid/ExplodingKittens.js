@@ -1,5 +1,11 @@
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
 
+/**
+ * Displays the modal contents listing all players so one can be picked
+ *
+ * @param callback Function to call with the selected player
+ * @constructor
+ */
 export default function TargetPlayer({callback}: {callback: (sessionId: string) => void}) {
     let room = useColyseusRoom();
     let allPlayers = useColyseusState(state => state.players);

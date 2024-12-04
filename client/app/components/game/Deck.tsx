@@ -1,7 +1,7 @@
-import {CardComponent} from "./CardComponent";
-import {Card} from "../../../server/shared/card";
+import CardComponent from "../cards/CardComponent";
+import {Card} from "../../../../server/shared/card";
 import {useEffect, useRef, useState} from "react";
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
 import {
     cardSeparation,
     fanAngleX,
@@ -10,15 +10,23 @@ import {
     initialAngleX,
     initialAngleZ,
     randomOffsetFactor, topCardHoverZ
-} from "../utility/constants";
+} from "../../utility/constants";
 
+/**
+ * Visual deck showing all remaining cards. Fans out when cards remaining < fanLimit, has random offsets, hovers top card if drawing is allowed, shuffles
+ *
+ * @param drawCallback Function to call when a card is drawn
+ * @param drawDisabled Whether drawing a card is currently allowed
+ * @constructor
+ */
 export default function Deck({drawCallback, drawDisabled}: { drawCallback: () => void, drawDisabled: boolean }) {
     let [angleX, setAngleX] = useState(initialAngleX);
     let [angleZ, setAngleZ] = useState(initialAngleZ);
     let [angleZOffset, setAngleZOffset] = useState(0);
     let [topCardTranslate, setTopCardTranslate] = useState([0, 0, 0]);
+
     let [drawing, setDrawing] = useState(false);
-    let [suspendTransition, setSuspendTransition] = useState(false);
+    let [suspendTransition, setSuspendTransition] = useState(false); // Transitions should be suspended while the top card changes
 
     let cardsInDeck = useColyseusState(state => state.deckLength);
     let [lastCardsInDeck, setLastCardsInDeck] = useState(0);
@@ -28,18 +36,33 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     if (lastCardsInDeck !== cardsInDeck) {
         setLastCardsInDeck(cardsInDeck);
 
-        if (suspendTransition) {
-            setTopCardTranslate([0, 0, 0]);
-            setDrawing(false);
+        if (suspendTransition) { // If a card has been drawn by this player, transitions should be suspended
+            setTopCardTranslate([0, 0, 0]); // The card has been drawn, so return it to the top of the deck
+            setDrawing(false); // Signify that drawing is complete
         }
     }
 
     useEffect(() => {
-        if (suspendTransition && !drawing) setTimeout(() => setSuspendTransition(false), 200);
+        if (suspendTransition && !drawing) setTimeout(() => setSuspendTransition(false), 200); // Resume transitions after the card has returned
     }, [suspendTransition, drawing]);
 
     let [shufflePositions, setShufflePositions] = useState(new Array(cardsInDeck).fill(0).map(_ => [0, 0]));
     let randomOffsets = useRef(new Array(cardsInDeck).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
+
+    let newShufflePositions = structuredClone(shufflePositions);
+    while (randomOffsets.current.length < cardsInDeck) {
+        randomOffsets.current = randomOffsets.current.concat([[(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]]);
+        newShufflePositions.concat([[0, 0]])
+    }
+
+    while (randomOffsets.current.length > cardsInDeck) {
+        randomOffsets.current = randomOffsets.current.filter((_, i) => i !== randomOffsets.current.length - 1);
+        newShufflePositions = newShufflePositions.filter((_, i) => i !== newShufflePositions.length - 1);
+    }
+
+    if (newShufflePositions.length !== shufflePositions.length) {
+        setShufflePositions(newShufflePositions)
+    }
 
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
     let implosionIndex: number | undefined = undefined;
@@ -78,6 +101,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                 }} className={"absolute transition-transform border-[1px] border-[#f5e7d9]"} key={i}/>
             ))}
 
+            {/* Render top card separately */}
             <CardComponent card={distanceToImplosion === 0 ? Card.IMPLODING : Card.BACK}
                            style={{
                                transform: `rotate3d(1,0,0,${drawing ? 0 : angleX}deg) 
@@ -105,7 +129,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                                }, 300)
 
                                setTimeout(() => {
-                                   setSuspendTransition(true);
+                                   setSuspendTransition(true); // Suspend transitions while the card is actually drawn
                                    drawCallback();
                                }, 700)
                            }}

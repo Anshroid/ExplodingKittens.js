@@ -1,15 +1,25 @@
-import Deck from "../components/Deck";
+import Deck from "../components/game/Deck";
 import {TurnState} from "../../../server/shared/util";
-import Discard from "../components/Discard";
+import Discard from "../components/game/Discard";
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 
 export default function Spectate() {
     let room = useColyseusRoom();
+    if (room == undefined) return;
+
     let turnState = useColyseusState(state => state.turnState);
     let turnIndex = useColyseusState(state => state.turnIndex);
+    if (turnIndex === undefined) return;
+
     let playerIndexMap = useColyseusState(state => state.playerIndexMap)
+    if (playerIndexMap == undefined) return;
+
     let players = useColyseusState(state => state.players);
+    if (players == undefined) return;
+
     let spectators = useColyseusState(state => state.spectators);
+    if (spectators == undefined) return;
+
     let turnRepeats = useColyseusState(state => state.turnRepeats);
 
     return (

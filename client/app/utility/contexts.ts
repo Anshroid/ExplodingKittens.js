@@ -19,9 +19,7 @@ export const DiscordSDKContext = createContext(new DiscordSDKContextType());
 
 export const {
     client,
-    connectToColyseus,
     setCurrentRoom,
-    disconnectFromColyseus,
     useColyseusRoom,
     useColyseusState
 } = colyseus<GameRoomState>('/.proxy/api');

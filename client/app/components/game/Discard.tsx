@@ -1,6 +1,6 @@
-import {CardComponent} from "./CardComponent";
+import CardComponent from "../cards/CardComponent";
 import {useRef, useState} from "react";
-import {useColyseusState} from "../utility/contexts";
+import {useColyseusState} from "../../utility/contexts";
 import {
     cardSeparation,
     fanAngleX,
@@ -8,9 +8,15 @@ import {
     initialAngleX,
     initialAngleZ,
     randomOffsetFactor
-} from "../utility/constants";
+} from "../../utility/constants";
 import TargetInfobox from "./TargetInfobox";
+import {useDroppable} from "@dnd-kit/core";
 
+/**
+ * Visual discard pile showing all cards randomly rotated. Fans out at any point to show top cards.
+ *
+ * @constructor
+ */
 export default function Discard() {
     let [angleX, setAngleX] = useState(initialAngleX);
     let [angleZOffset, setAngleZOffset] = useState(0);
@@ -19,6 +25,7 @@ export default function Discard() {
     let randomRotations = useRef<number[]>([]);
 
     let discard = useColyseusState(state => state.discard);
+    if (discard == undefined) return;
 
     while (randomOffsets.current.length < discard.toJSON().length) {
         randomOffsets.current = randomOffsets.current.concat([[(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]]);
@@ -26,9 +33,13 @@ export default function Discard() {
     }
 
     while (randomOffsets.current.length > discard.toJSON().length) {
-        randomOffsets.current = randomOffsets.current.filter((_, i) => i === randomOffsets.current.length - 1);
-        randomRotations.current = randomRotations.current.filter((_, i) => i === randomRotations.current.length - 1);
+        randomOffsets.current = randomOffsets.current.filter((_, i) => i !== randomOffsets.current.length - 1);
+        randomRotations.current = randomRotations.current.filter((_, i) => i !== randomRotations.current.length - 1);
     }
+
+    const {setNodeRef} = useDroppable({
+        id: "discard-pile"
+    })
 
     if (!discard) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
 
@@ -39,14 +50,15 @@ export default function Discard() {
         }} onMouseOut={() => {
             setAngleX(initialAngleX);
             setAngleZOffset(0);
-        }}>
+        }} ref={setNodeRef}>
             <TargetInfobox/>
 
             {discard.map((card, i) => (
                 <CardComponent card={card} style={{
-                    transform: `rotate3d(1,0,0,${angleX}deg) 
-                                    rotate3d(0,0,1,${angleZOffset ? initialAngleZ + i * angleZOffset : randomRotations.current[i]}deg)
-                                    translate3d(${randomOffsets.current[i].join("px, ")}px, ${i * cardSeparation}px)`,
+                    transform: `
+                        rotate3d(1,0,0,${angleX}deg) 
+                        rotate3d(0,0,1,${angleZOffset ? initialAngleZ + i * angleZOffset : randomRotations.current[i]}deg)
+                        translate3d(${randomOffsets.current[i].join("px, ")}px, ${i * cardSeparation}px)`,
                     perspective: "1000px"
                 }} className={"absolute transition-transform border-[1px] border-[#f5e7d9] card-fall"} key={i}/>
             ))}

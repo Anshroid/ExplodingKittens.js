@@ -1,7 +1,13 @@
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
-import {CardNames} from "../../../server/shared/card";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
+import {CardNames} from "../../../../server/shared/card";
 
-export function Favour({callback}: { callback: () => void }) {
+/**
+ * Displays the modal contents to choose a card to give away to another player. Sends the message to colyseus as well.
+ *
+ * @param callback Function to call when choosing is done
+ * @constructor
+ */
+export default function Favour({callback}: { callback: () => void }) {
     let players = useColyseusState((state) => state.players);
     let playerIndexMap = useColyseusState((state) => state.playerIndexMap)
     let room = useColyseusRoom();
@@ -13,8 +19,6 @@ export function Favour({callback}: { callback: () => void }) {
 
     let cards = players.at(ourIndex)?.cards;
     if (!cards) return;
-
-
 
     return (
         <>

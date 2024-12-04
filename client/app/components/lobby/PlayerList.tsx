@@ -1,6 +1,12 @@
 import {HTMLAttributes} from "react";
-import {useColyseusState} from "../utility/contexts";
+import {useColyseusState} from "../../utility/contexts";
 
+/**
+ * Displays a list of players
+ *
+ * @param props
+ * @constructor
+ */
 export default function PlayerList(props: HTMLAttributes<HTMLDivElement>) {
     const spectators = useColyseusState((state) => state.spectators)
 

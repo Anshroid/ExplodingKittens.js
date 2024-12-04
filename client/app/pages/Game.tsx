@@ -1,11 +1,23 @@
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import {useEffect, useState} from "react";
-import CardsList from "../components/CardsList";
+import CardHand from "../components/cards/CardHand";
 import {Card} from "../../../server/shared/card";
 import {isCatCard, TurnState} from "../../../server/shared/util";
-import {GameModal} from "../components/GameModal";
-import Deck from "../components/Deck";
-import Discard from "../components/Discard";
+import GameModal, {ModalType} from "../components/game/GameModal";
+import Deck from "../components/game/Deck";
+import Discard from "../components/game/Discard";
+import {
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    DragStartEvent,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors
+} from "@dnd-kit/core";
+import {arrayMove, sortableKeyboardCoordinates} from "@dnd-kit/sortable";
+import DroppableCard from "../components/cards/DroppableCard";
 
 export default function Game() {
     // let {auth, discordSDK} = useContext(DiscordSDKContext);
@@ -15,6 +27,8 @@ export default function Game() {
     let playerIndexMap = useColyseusState(state => state.playerIndexMap)
     let players = useColyseusState(state => state.players);
     let spectators = useColyseusState(state => state.spectators);
+    if (spectators == undefined) return;
+
     let ownerId = useColyseusState(state => state.ownerId);
     let turnRepeats = useColyseusState(state => state.turnRepeats);
 
@@ -29,6 +43,8 @@ export default function Game() {
     let [selectedCardMask, setSelectedCardMask] = useState<Array<boolean>>([]);
     let [cardOrder, setCardOrder] = useState<Array<number>>([]);
     let [prevCards, setPrevCards] = useState<Array<Card>>([]);
+
+    // Update card order when cards change (complicated!)
     if (cards.toJSON().length !== prevCards.length || !cards.toJSON().every((card, index) => prevCards[index] === card)) {
         let newCardOrder = structuredClone(cardOrder);
         if (prevCards.length > cards.length) { // Cards removed
@@ -40,12 +56,11 @@ export default function Game() {
             })
 
             newCardOrder = newCardOrder
-                .filter(elem => !removedIndices.includes(elem - 1))
-                .map(elem => elem - removedIndices.filter(index => elem > index).length)
+                .filter(elem => !removedIndices.includes(elem))
+                .map(elem => elem - removedIndices.filter(index => elem >= index).length)
         } else if (prevCards.length < cards.toJSON().length) { // Cards added
-            cards.slice(prevCards.length).forEach((_, index) => newCardOrder.push(prevCards.length + index + 1));
+            cards.slice(prevCards.length).forEach((_, index) => newCardOrder.push(prevCards.length + index));
         }
-
 
         setPrevCards(cards.toJSON());
         setCardOrder(newCardOrder);
@@ -54,7 +69,7 @@ export default function Game() {
 
     let selectedCards = cards.filter((_, index) => selectedCardMask[index]);
 
-    let [currentModal, setCurrentModal] = useState("");
+    let [currentModal, setCurrentModal] = useState(ModalType.None);
     let [theFuture, setTheFuture] = useState<Card[]>([])
 
     useEffect(() => {
@@ -64,7 +79,7 @@ export default function Game() {
         listeners.push(
             room.state.listen("turnState", (currentValue) => {
                 if ([TurnState.ChoosingImplodingPosition, TurnState.ChoosingExplodingPosition].includes(currentValue) && (turnIndex === ourIndex)) {
-                    setCurrentModal("choosePosition");
+                    setCurrentModal(ModalType.ChoosePosition);
                 }
 
                 if (currentValue === TurnState.GameOver && ownerId === room.sessionId) {
@@ -83,11 +98,11 @@ export default function Game() {
             }),
 
             room.onMessage("favourRequest", () => {
-                setCurrentModal("favour");
+                setCurrentModal(ModalType.Favour);
             }),
 
             room.onMessage("theFuture", (message) => {
-                setCurrentModal("theFuture");
+                setCurrentModal(ModalType.TheFuture);
                 setTheFuture(message.cards)
             })
         );
@@ -99,7 +114,7 @@ export default function Game() {
         }
     }, [turnIndex, ownerId]);
 
-    function cardCallback(targetSessionId?: string, targetCard?: Card) {
+    function playCallback(targetSessionId?: string, targetCard?: Card) {
         if (!room || !playerIndexMap) return;
 
         switch (selectedCards.length) {
@@ -114,7 +129,7 @@ export default function Game() {
             case 3:
                 if (!targetSessionId) return;
                 if (!targetCard) {
-                    setCurrentModal("targetCard");
+                    setCurrentModal(ModalType.TargetCard);
                     return;
                 }
                 room.send("playCombo", {
@@ -129,67 +144,130 @@ export default function Game() {
                 break;
         }
 
-        setCurrentModal("");
+        setCurrentModal(ModalType.None);
         setSelectedCardMask(cards.map(_ => false));
     }
 
+    // Drag and drop handlers
+    const [activeId, setActiveId] = useState<number>();
+
+    function handleDragStart(event: DragStartEvent) {
+        const {active} = event;
+
+        setActiveId(active.id as number - 1); // ids cannot be 0, so are shifted by 1
+    }
+
+    function handleDragEnd(event: DragEndEvent) {
+        const {active, over} = event;
+        setActiveId(undefined);
+
+        if (!over) return;
+
+        if (over.id == 'discard-pile') {
+            if (playerIndexMap == undefined || room == undefined) return;
+
+            if (isPlayValid(selectedCards) && turnState === TurnState.Normal && playerIndexMap.get(room.sessionId) === turnIndex) {
+                handlePlayCard();
+            }
+
+            if (turnState === TurnState.Noping && cards.includes(Card.NOPE) && selectedCards.includes(Card.NOPE) && selectedCards.length == 1) {
+                room.send("nope")
+            }
+        }
+
+        if (active.id !== over.id) {
+            setCardOrder((prevOrder) => {
+                const oldIndex = prevOrder.indexOf(active.id as number - 1); // ids cannot be 0, so are shifted by 1
+                const newIndex = prevOrder.indexOf(over.id as number - 1);
+
+                return arrayMove(prevOrder, oldIndex, newIndex);
+            });
+        }
+
+    }
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 4
+            }
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        }),
+    );
+
+    function handlePlayCard() {
+        if (room == undefined) return;
+
+        if (((selectedCards.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0])) || selectedCards.length > 1)) {
+            switch (selectedCards.length) {
+                case 1:
+                case 2:
+                case 3:
+                    setCurrentModal(ModalType.TargetPlayer);
+                    break;
+                case 5:
+                    setCurrentModal(ModalType.TargetDiscard);
+                    break;
+            }
+            return;
+        }
+
+        room.send("playCard", {card: selectedCards[0]});
+        setSelectedCardMask(cards.map(_ => false));
+    }
 
     return (
         <>
-            <GameModal type={currentModal} cardCallback={cardCallback} closeCallback={() => setCurrentModal("")}
+            <GameModal type={currentModal} playCallback={playCallback} closeCallback={() => setCurrentModal(ModalType.None)}
                        theFuture={theFuture}/>
             <div className={"flex items-center text-center justify-center h-full"}>
-                <div className={"justify-center flex-none"}>
-                    <p>Players: {players.map(player => player.displayName).join(", ")}</p>
-                    {spectators.length > 0 ? <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
+                <DndContext
+                    sensors={sensors}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className={"justify-center flex-none"}>
+                        <p>Players: {players.map(player => player.displayName).join(", ")}</p>
+                        {spectators.length > 0 ?
+                            <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
-                    <br/>
+                        <br/>
 
-                    <p>Turn state: {turnState}</p>
-                    <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                        <p>Turn state: {turnState}</p>
+                        <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
 
-                    <br/>
+                        <br/>
 
-                    <div className={"flex flex-row justify-center gap-20"}>
-                        <Deck drawCallback={() => room.send("drawCard")}
-                              drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
+                        <div className={"flex flex-row justify-center gap-20"}>
+                            <Deck drawCallback={() => room.send("drawCard")}
+                                  drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
 
-                        <Discard/>
+                            <Discard/>
+                        </div>
+
+                        <button onClick={handlePlayCard}
+                                disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
+                                className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
+                        </button>
+
+                        <button onClick={() => {
+                            room.send("nope")
+                        }} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}
+                                className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!
+                        </button>
+                        <br/>
+                        <br/>
+                        <CardHand cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
+                                  setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
+                                  activeId={activeId}/>
                     </div>
-
-                    <button onClick={() => {
-                        if (((selectedCards.length == 1 && [Card.FAVOUR, Card.TARGETEDATTACK].includes(selectedCards[0])) || selectedCards.length > 1)) {
-                            switch (selectedCards.length) {
-                                case 1:
-                                case 2:
-                                case 3:
-                                    setCurrentModal("targetPlayer");
-                                    break;
-                                case 5:
-                                    setCurrentModal("targetDiscard");
-                                    break;
-                            }
-                            return;
-                        }
-
-                        room.send("playCard", {card: selectedCards[0]});
-                        setSelectedCardMask(cards.map(_ => false));
-                    }}
-                            disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
-                            className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
-                    </button>
-
-                    <button onClick={() => {
-                        room.send("nope")
-                    }} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}
-                            className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!
-                    </button>
-                    <br/>
-                    <br/>
-                    <CardsList cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
-                               setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
-                               setCardOrder={setCardOrder}/>
-                </div>
+                    <DragOverlay>
+                        {activeId !== undefined ?
+                            <DroppableCard card={cards[activeId]} selectedCards={selectedCards}/> : null}
+                    </DragOverlay>
+                </DndContext>
             </div>
         </>
     )

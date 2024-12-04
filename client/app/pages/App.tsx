@@ -7,7 +7,11 @@ export default function App() {
     const started = useColyseusState((state) => state.started);
 
     let room = useColyseusRoom();
+    if (room == undefined) return;
+
     let playerIndexMap = useColyseusState(state => state.playerIndexMap)
+    if (playerIndexMap == undefined) return;
+
     let ourIndex = playerIndexMap.get(room.sessionId);
     if (ourIndex === undefined) return;
 

@@ -1,14 +1,22 @@
 import {useEffect, useState} from "react";
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
-import {CardNames} from "../../../server/shared/card";
-import {TurnState} from "../../../server/shared/util";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
+import {CardNames} from "../../../../server/shared/card";
+import {TurnState} from "../../../../server/shared/util";
 
+/**
+ * Displays information about targeted cards that have been played
+ *
+ * @constructor
+ */
 export default function TargetInfobox() {
     let [message, setMessage] = useState('');
     let [hidden, setHidden] = useState(true);
 
     let room = useColyseusRoom();
+    if (room == undefined) return;
+
     let players = useColyseusState(state => state.players);
+    if (players == undefined) return;
 
     useEffect(() => {
         room.onMessage("cardTarget", message => {

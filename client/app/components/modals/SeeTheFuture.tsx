@@ -1,4 +1,4 @@
-import {Card} from "../../../server/shared/card";
+import {Card} from "../../../../server/shared/card";
 import {useState} from "react";
 import {
     DndContext,
@@ -15,12 +15,18 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import {SortableCard} from "./SortableCard";
-import {useColyseusRoom, useColyseusState} from "../utility/contexts";
-import {TurnState} from "../../../server/shared/util";
+import SortableCard from "../cards/SortableCard";
+import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
+import {TurnState} from "../../../../server/shared/util";
 
-
-export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callback: () => void }) {
+/**
+ * Displays the modal contents showing the future, optionally allowing it to be edited using sortables.
+ *
+ * @param theFuture What cards are in the future
+ * @param callback Function to call when viewing or choosing is done.
+ * @constructor
+ */
+export default function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callback: () => void }) {
     let room = useColyseusRoom();
     let turnState = useColyseusState(state => state.turnState);
 
@@ -28,7 +34,7 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
 
     let alter = turnState === TurnState.AlteringTheFuture;
 
-    let [indices, setIndices] = useState([1, 2, 3]);
+    let [indices, setIndices] = useState([0, 1, 2]);
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -43,8 +49,8 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
 
         if (active.id !== over.id) {
             setIndices((indices) => {
-                const oldIndex = indices.indexOf(active.id as number);
-                const newIndex = indices.indexOf(over.id as number);
+                const oldIndex = indices.indexOf(active.id as number - 1);
+                const newIndex = indices.indexOf(over.id as number - 1);
 
                 return arrayMove(indices, oldIndex, newIndex);
             });
@@ -64,7 +70,7 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
                         disabled={!alter}
                     >
                         {indices.map((index) => (
-                            <SortableCard key={index} card={theFuture[index - 1]} id={index}/>
+                            <SortableCard key={index} card={theFuture[index]} id={index + 1}/>
                         ))}
                     </SortableContext>
                 </DndContext>
@@ -72,7 +78,7 @@ export function SeeTheFuture({theFuture, callback}: { theFuture: Card[], callbac
 
             <button onClick={() => {
                 if (alter) {
-                    room.send("alterTheFuture", {cards: indices.map(index => theFuture[index - 1])})
+                    room.send("alterTheFuture", {cards: indices.map(index => theFuture[index])})
                 }
                 callback();
             }}>OK!
