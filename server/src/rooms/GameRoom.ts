@@ -14,10 +14,20 @@ function shuffleArray(array: Array<any>) {
 export class GameRoom extends Room<GameRoomState> {
     maxClients = 12;
 
-    onCreate(options: { instanceId: string }) {
+    async onCreate(options: { instanceId: string }) {
         this.setState(new GameRoomState());
-        this.setPrivate(true).then();
+        await this.setPrivate(true)
         this.roomId = options.instanceId;
+
+        const verifyRes = await fetch(`https://discord.com/api/applications/${process.env.DISCORD_CLIENT_ID}/activity-instances/${options.instanceId}`, {
+            headers: {
+                "Authorization": `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+            }
+        });
+        if (!verifyRes.ok && process.env.NODE_ENV === "production") {
+            console.log(`[${this.roomId}] Instance ID verification failed!`);
+            return;
+        }
 
         this.log("initialised!")
 
