@@ -13,10 +13,12 @@ export default function TargetDiscard({callback}: { callback: (targetCard: Card)
     if (discard === undefined) return;
 
     return (
-        <ul>
+        <div className="flex flex-row gap-1 flex-wrap justify-center">
             {discard.map((card, index) =>
-                <button onClick={() => callback(card)} key={index}><CardComponent card={card}/></button>
+                <div key={index}>
+                    <button onClick={() => callback(card)}><CardComponent card={card}/></button>
+                </div>
             )}
-        </ul>
+        </div>
     );
 }

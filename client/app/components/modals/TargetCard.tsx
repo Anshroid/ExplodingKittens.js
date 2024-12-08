@@ -9,8 +9,8 @@ import CardComponent from "../cards/CardComponent";
  */
 export default function TargetCard({callback}: { callback: (cardId: Card) => void }) {
     return (
-        <div className="flex flex-row gap-1 flex-wrap">
-            {Array.from(CardNames.keys()).map(cardId =>
+        <div className="flex flex-row gap-1 flex-wrap justify-center">
+            {Array.from(CardNames.keys()).filter(card => ![Card.BACK, Card.EXPLODING].includes(card)).map(cardId =>
                 <div key={cardId}>
                     <button onClick={() => callback(cardId)}><CardComponent card={cardId}/></button>
                 </div>
