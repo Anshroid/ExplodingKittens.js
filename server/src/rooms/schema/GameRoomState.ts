@@ -22,6 +22,7 @@ export class GamePlayer extends Schema {
         return this.sessionId === client.sessionId;
     })
     @type(["number"]) cards = new ArraySchema<Card>();
+    @type("number") numCards: number;
 
 }
 

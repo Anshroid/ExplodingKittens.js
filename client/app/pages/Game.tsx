@@ -39,6 +39,17 @@ export default function Game() {
 
     let cards = players.at(ourIndex)?.cards;
     if (cards === undefined) return;
+    // let [errorAck, setErrorAck] = useState<boolean>(false);
+    // let numCards = players.at(ourIndex)?.numCards;
+    // if (cards.length !== numCards && !errorAck) {
+    //     return (
+    //         <>
+    //             <p>A non-fatal error has occurred (numCard mismatch), report the current situation to <code>anshroid</code> and press the below button to continue.</p>
+    //             <button onClick={() => setErrorAck(true)}>Continue</button>
+    //         </>
+    //     )
+    // }
+    // if (errorAck && cards.length === numCards) setErrorAck(false);
 
     let [selectedCardMask, setSelectedCardMask] = useState<Array<boolean>>([]);
     let [cardOrder, setCardOrder] = useState<Array<number>>([]);
@@ -68,6 +79,7 @@ export default function Game() {
     }
 
     let selectedCards = cards.filter((_, index) => selectedCardMask[index]);
+    const isPlayAllowed = isPlayValid(selectedCards) && turnState === TurnState.Normal && playerIndexMap.get(room.sessionId) === turnIndex;
 
     let [currentModal, setCurrentModal] = useState(ModalType.None);
     let [theFuture, setTheFuture] = useState<Card[]>([])
@@ -166,7 +178,7 @@ export default function Game() {
         if (over.id == 'discard-pile') {
             if (playerIndexMap == undefined || room == undefined) return;
 
-            if (isPlayValid(selectedCards) && turnState === TurnState.Normal && playerIndexMap.get(room.sessionId) === turnIndex) {
+            if (isPlayAllowed) {
                 handlePlayCard();
             }
 
@@ -229,7 +241,7 @@ export default function Game() {
                     onDragEnd={handleDragEnd}
                 >
                     <div className={"justify-center flex-none"}>
-                        <p>Players: {players.map(player => player.displayName).join(", ")}</p>
+                        <p>Players: {players.map(player => `${player.displayName} (${player.numCards} cards)`).join(", ")}</p>
                         {spectators.length > 0 ?
                             <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
@@ -248,8 +260,8 @@ export default function Game() {
                         </div>
 
                         <button onClick={handlePlayCard}
-                                disabled={!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}
-                                className={"rounded-md p-1 m-1 " + (!isPlayValid(selectedCards) || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex ? "bg-green-800" : "bg-green-400")}>Play!
+                                disabled={!isPlayAllowed}
+                                className={"rounded-md p-1 m-1 " + (!isPlayAllowed ? "bg-green-800" : "bg-green-400")}>Play!
                         </button>
 
                         <button onClick={() => {
@@ -261,11 +273,11 @@ export default function Game() {
                         <br/>
                         <CardHand cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
                                   setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
-                                  activeId={activeId}/>
+                                  activeId={activeId} isPlayAllowed={isPlayAllowed}/>
                     </div>
                     <DragOverlay>
                         {activeId !== undefined ?
-                            <DroppableCard card={cards[activeId]} selectedCards={selectedCards}/> : null}
+                            <DroppableCard card={cards[activeId]} selectedCards={selectedCards} isPlayAllowed={isPlayAllowed}/> : null}
                     </DragOverlay>
                 </DndContext>
             </div>

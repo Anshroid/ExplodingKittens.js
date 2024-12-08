@@ -15,14 +15,16 @@ import {DragEndEvent, DragStartEvent, useDndMonitor} from "@dnd-kit/core";
  * @param setSelectedCardMask Setter for selectedCardMask
  * @param cardOrder Integer list mapping visual indices to internal indices
  * @param activeId Which card is currently active (being dragged)
+ * @param isPlayAllowed Whether playing the given card/combo is currently allowed
  * @constructor
  */
-export default function CardHand({cards, selectedCardMask, setSelectedCardMask, cardOrder, activeId}: {
+export default function CardHand({cards, selectedCardMask, setSelectedCardMask, cardOrder, activeId, isPlayAllowed}: {
     cards: Card[];
     selectedCardMask: boolean[],
     setSelectedCardMask: Dispatch<SetStateAction<boolean[]>>,
     cardOrder: number[],
-    activeId: number | undefined
+    activeId: number | undefined,
+    isPlayAllowed: boolean
 }) {
     let [prevMasked, setPrevMasked] = useState<boolean>(false);
     useDndMonitor({
@@ -31,6 +33,7 @@ export default function CardHand({cards, selectedCardMask, setSelectedCardMask, 
             setSelectedCardMask(mask => mask.with(event.active.id as number - 1, true));
         },
         onDragEnd(event: DragEndEvent) {
+            if (event.over?.id === "discard-pile" && isPlayAllowed) return;
             setSelectedCardMask(mask => mask.with(event.active.id as number - 1, prevMasked));
         }
     })
@@ -76,7 +79,7 @@ export default function CardHand({cards, selectedCardMask, setSelectedCardMask, 
                                       newSelectedCardMask[internIndex] = !selectedCardMask[internIndex];
                                       setSelectedCardMask(newSelectedCardMask);
                                   }}
-                                  className={"transition-transform " + ((activeId !== internIndex ? selectedCardMask[internIndex] : prevMasked) ? "-translate-y-3" : "") + " " + (activeId === internIndex ? "opacity-30" : "")}
+                                  className={"transition-transform " + ((activeId !== internIndex ? selectedCardMask[internIndex] : prevMasked) ? "-translate-y-3" : "") + " " + (activeId === internIndex ? "opacity-30 z-10" : "")}
                                   style={{
                                       marginLeft: handSizeMargin,
                                       marginRight: handSizeMargin,

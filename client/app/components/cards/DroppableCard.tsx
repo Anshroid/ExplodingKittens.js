@@ -9,8 +9,9 @@ import {cardSeparation, fanAngleZOffset, initialAngleX, initialAngleZ} from "../
  *
  * @param card The type of card being dragged
  * @param selectedCards All selected cards to be rendered over the drop zone
+ * @param isPlayAllowed Whether playing the given card/combo is currently allowed
  */
-export default function DroppableCard({card, selectedCards}: { card: Card, selectedCards: Card[] }) {
+export default function DroppableCard({card, selectedCards, isPlayAllowed}: { card: Card, selectedCards: Card[], isPlayAllowed: boolean }) {
     const [overDiscardPile, setOverDiscardPile] = useState(false);
 
     useDndMonitor({
@@ -28,17 +29,24 @@ export default function DroppableCard({card, selectedCards}: { card: Card, selec
     })
 
     return (
-        <div className={"min-w-36 min-h-[201px]"}> {/* Ensure the overlay still has dimensions when the cards are transformed and absolutely positioned */}
+        <div
+            className={"min-w-36 min-h-[201px]"}> {/* Ensure the overlay still has dimensions when the cards are transformed and absolutely positioned */}
             {
-                overDiscardPile ? selectedCards.map((selectedCard, i) => (
-                    <CardComponent card={selectedCard} key={selectedCard} style={{
+                selectedCards.filter((_, i) => i != selectedCards.indexOf(card)).map((selectedCard, i) => (
+                    <CardComponent card={selectedCard} key={i} style={{
                         transform: `
                             rotate3d(1,0,0,${initialAngleX}deg)
                             rotate3d(0,0,1,${initialAngleZ + i * fanAngleZOffset}deg)
                             translateZ(${i * cardSeparation}px)`
-                    }} className={"transition-transform absolute"}/>
-                )) : <CardComponent card={card} key={card} className={"transition-transform"}/>
+                    }} className={"transition-transform absolute " + (overDiscardPile && isPlayAllowed ? "" : "hidden")}/>
+                ))
             }
+            <CardComponent card={card} key={selectedCards.length - 1} style={{
+                transform: overDiscardPile && isPlayAllowed ? `
+                            rotate3d(1,0,0,${initialAngleX}deg)
+                            rotate3d(0,0,1,${initialAngleZ + (selectedCards.length - 1) * fanAngleZOffset}deg)
+                            translateZ(${(selectedCards.length - 1) * cardSeparation}px)` : ""
+            }} className={"transition-transform absolute delay-0"}/>
         </div>
     )
 }

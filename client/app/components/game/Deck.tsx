@@ -50,12 +50,11 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let randomOffsets = useRef(new Array(cardsInDeck).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
 
     let newShufflePositions = structuredClone(shufflePositions);
-    while (randomOffsets.current.length < cardsInDeck) {
+    while (newShufflePositions.length < cardsInDeck) {
         randomOffsets.current = randomOffsets.current.concat([[(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]]);
         newShufflePositions.concat([[0, 0]])
     }
-
-    while (randomOffsets.current.length > cardsInDeck) {
+    while (newShufflePositions.length > cardsInDeck) {
         randomOffsets.current = randomOffsets.current.filter((_, i) => i !== randomOffsets.current.length - 1);
         newShufflePositions = newShufflePositions.filter((_, i) => i !== newShufflePositions.length - 1);
     }
