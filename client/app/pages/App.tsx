@@ -2,7 +2,7 @@ import Lobby from "./Lobby";
 import Game from "./Game";
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import Spectate from "./Spectate";
-import Banner from "../../static/banner.png";
+import Banner from "../../static/background.png";
 
 export default function App() {
     const started = useColyseusState((state) => state.started);
