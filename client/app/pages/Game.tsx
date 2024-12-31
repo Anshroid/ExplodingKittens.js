@@ -232,7 +232,8 @@ export default function Game() {
 
     return (
         <>
-            <GameModal type={currentModal} playCallback={playCallback} closeCallback={() => setCurrentModal(ModalType.None)}
+            <GameModal type={currentModal} playCallback={playCallback}
+                       closeCallback={() => setCurrentModal(ModalType.None)}
                        theFuture={theFuture}/>
             <div className={"flex items-center text-center justify-center h-full"}>
                 <DndContext
@@ -240,15 +241,17 @@ export default function Game() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className={"justify-center flex-none"}>
-                        <p>Players: {players.map(player => `${player.displayName} (${player.numCards} cards)`).join(", ")}</p>
-                        {spectators.length > 0 ?
-                            <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
+                    <div className={"flex-none"}>
+                        <div className={"border rounded-md p-4 backdrop-blur backdrop-brightness-50 w-fit m-auto"}>
+                            <p>Players: {players.map(player => `${player.displayName} (${player.numCards} cards)`).join(", ")}</p>
+                            {spectators.length > 0 ?
+                                <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
-                        <br/>
+                            <br/>
 
-                        <p>Turn state: {turnState}</p>
-                        <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                            {/*<p>Turn state: {turnState}</p>*/}
+                            <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                        </div>
 
                         <br/>
 
@@ -259,16 +262,16 @@ export default function Game() {
                             <Discard/>
                         </div>
 
-                        <button onClick={handlePlayCard}
-                                disabled={!isPlayAllowed}
-                                className={"rounded-md p-1 m-1 " + (!isPlayAllowed ? "bg-green-800" : "bg-green-400")}>Play!
-                        </button>
+                        {/*<button onClick={handlePlayCard}*/}
+                        {/*        disabled={!isPlayAllowed}*/}
+                        {/*        className={"rounded-md p-1 m-1 " + (!isPlayAllowed ? "bg-green-800" : "bg-green-400")}>Play!*/}
+                        {/*</button>*/}
 
-                        <button onClick={() => {
-                            room.send("nope")
-                        }} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}
-                                className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!
-                        </button>
+                        {/*<button onClick={() => {*/}
+                        {/*    room.send("nope")*/}
+                        {/*}} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}*/}
+                        {/*        className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!*/}
+                        {/*</button>*/}
                         <br/>
                         <br/>
                         <CardHand cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
@@ -277,7 +280,8 @@ export default function Game() {
                     </div>
                     <DragOverlay>
                         {activeId !== undefined ?
-                            <DroppableCard card={cards[activeId]} selectedCards={selectedCards} isPlayAllowed={isPlayAllowed}/> : null}
+                            <DroppableCard card={cards[activeId]} selectedCards={selectedCards}
+                                           isPlayAllowed={isPlayAllowed}/> : null}
                     </DragOverlay>
                 </DndContext>
             </div>

@@ -1,7 +1,7 @@
 {
   "name": "exploding-kittens-client",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.9.5",
   "type": "module",
   "scripts": {
     "dev": "vite",

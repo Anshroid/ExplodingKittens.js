@@ -12,7 +12,7 @@ export default function PlayerList(props: HTMLAttributes<HTMLDivElement>) {
 
     return (
         <div {...props}>
-            <h2 className={"font-bold underline"}>Players in lobby</h2>
+            <h2 className={"font-bold underline text-center"}>Players in lobby</h2>
             <ol>
                 {
                     spectators ?
