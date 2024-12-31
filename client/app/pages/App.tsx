@@ -20,7 +20,7 @@ export default function App() {
 
     return (
         <>
-            <img src={Banner} alt={"background image"} className={"absolute -z-40 min-h-full min-w-full object-cover"}/>
+            <img src={Banner} alt={"background image"} className={"absolute -z-40 h-full w-full object-cover"}/>
             {started ?
                 (spectating ?
                         <Spectate/>

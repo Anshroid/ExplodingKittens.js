@@ -36,6 +36,10 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
             await setCurrentRoom(room);
         }
 
+        addEventListener("unload", () => {
+            room.leave(true);
+        })
+
         console.log("Joined room with instance id " + instanceId)
     })().then(() => {
         createRoot(document.getElementById('root') as Container).render(

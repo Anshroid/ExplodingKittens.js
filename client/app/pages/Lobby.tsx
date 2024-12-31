@@ -42,7 +42,7 @@ export default function Lobby() {
                             className={"justify-self-start border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
                         <div className={"flex-grow flex flex-col h-full items-center justify-center"}>
                             <img src={Logo} alt={"exploding kittens logo"}
-                                 className={"origin-center backdrop-blur backdrop-hue-rotate-180 rounded-full"}
+                                 className={"origin-center backdrop-blur backdrop-hue-rotate-180 rounded-full max-h-[70vh]"}
                                  style={{transform: `translate(${(mousePos[0] - 0.5 * window.innerWidth) * 0.02}px, ${(mousePos[1] - 0.5 * window.innerHeight) * 0.01}px)`}}/>
                         </div>
                         <PlayerList
