@@ -97,7 +97,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)
                                     translate3d(${shufflePositions[i].join("px, ")}px, ${i * cardSeparation}px)`,
                     perspective: "1000px"
-                }} className={"absolute transition-transform border-[1px] border-[#f5e7d9]"} key={i}/>
+                }} className={"absolute transition-transform"} key={i}/>
             ))}
 
             {/* Render top card separately */}
@@ -109,7 +109,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                                    translate3d(${topCardTranslate.join("px, ")}px)`,
                                perspective: "1000px"
                            }}
-                           className={"absolute border-[1px] border-[#f5e7d9] " + (suspendTransition ? "" : "transition-transform ") + (drawDisabled ? "" : "cursor-pointer")}
+                           className={"absolute " + (suspendTransition ? "" : "transition-transform ") + (drawDisabled ? "" : "cursor-pointer")}
                            onMouseOver={() => {
                                if (!drawDisabled && !drawing) setTopCardTranslate([0, 0, topCardHoverZ])
                            }}

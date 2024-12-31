@@ -45,7 +45,7 @@ export default function ChoosePositionDeck({doneCallback}: { doneCallback: () =>
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)
                                     translateZ(${(i * cardSeparation) + (i > theCard ? deckSplitHoverZ : (i < theCard ? -deckSplitHoverZ : 0))}px)`,
                     perspective: "1000px"
-                }} className={"absolute transition-transform border-[1px] border-[#f5e7d9]"} key={i}
+                }} className={"absolute transition-transform"} key={i}
                                onMouseOver={() => {
                                    setHoveredCardIndices(prevState => prevState.concat(i))
                                }} onMouseOut={() => {
