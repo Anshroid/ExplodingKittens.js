@@ -33,18 +33,11 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
         let availableRooms = await client.getAvailableRooms()
         console.log(`[ExplodingKittens] Available Rooms: ${availableRooms.toString()}`);
 
-        if (availableRooms.map(room => room.roomId).includes(instanceId)) {
-            console.log("[ExplodingKittens] Room exists!")
-            try {
-                room = await client.joinById<GameRoomState>(instanceId, joinOptions)
-                await setCurrentRoom(room);
-            } catch (e) {
-                console.log(`[ExplodingKittens] Failed to join, creating room. Error: ${e}`)
-                room = await client.create<GameRoomState>("game_room", {instanceId: instanceId, ...joinOptions})
-                await setCurrentRoom(room);
-            }
-        } else {
-            console.log("[ExplodingKittens] Room does not exist, creating...")
+        try {
+            room = await client.joinById<GameRoomState>(instanceId, joinOptions)
+            await setCurrentRoom(room);
+        } catch (e) {
+            console.log(`[ExplodingKittens] Failed to join, creating room. Error: ${e}`)
             room = await client.create<GameRoomState>("game_room", {instanceId: instanceId, ...joinOptions})
             await setCurrentRoom(room);
         }
