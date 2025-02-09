@@ -363,6 +363,9 @@ export class GameRoom extends Room<GameRoomState> {
 
     onLeave(client: Client, consented: boolean) {
         this.log(client.sessionId + ` left, consented=${consented}!`);
+        this.log(`Overriding disconnection consent!`);
+
+        consented = true;
 
         if (this.state.started) {
             if (!consented) return;
@@ -478,7 +481,6 @@ export class GameRoom extends Room<GameRoomState> {
     }
 
     updatePlayerIndices() {
-        console.log(this.state.players.toArray())
         for (const [index, player] of this.state.players.toArray().entries()) {
             this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: false};
             this.state.playerIndexMap.set(player.sessionId, index);
