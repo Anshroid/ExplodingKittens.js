@@ -12,8 +12,7 @@ import {TurnState} from "../../../../server/shared/util";
  * @constructor
  */
 export default function ChoosePositionDeck({doneCallback}: { doneCallback: () => void }) {
-    let cardsInDeck = useColyseusState(state => state.deckLength);
-    if (cardsInDeck == undefined) return;
+    let cardsInDeck = useColyseusState(state => state.deckLength) ?? 0;
 
     let randomOffsets = useRef(new Array(cardsInDeck + 1).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
 

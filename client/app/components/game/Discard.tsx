@@ -24,15 +24,15 @@ export default function Discard() {
     let randomOffsets = useRef<number[][]>([]);
     let randomRotations = useRef<number[]>([]);
 
-    let discard = useColyseusState(state => state.discard);
-    if (discard == undefined) return;
+    let discardSchema = useColyseusState(state => state.discard);
+    let discard = discardSchema ? discardSchema.toArray() : [];
 
-    while (randomOffsets.current.length < discard.toJSON().length) {
+    while (randomOffsets.current.length < discard.length) {
         randomOffsets.current = randomOffsets.current.concat([[(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]]);
         randomRotations.current = randomRotations.current.concat([Math.random() * 335]);
     }
 
-    while (randomOffsets.current.length > discard.toJSON().length) {
+    while (randomOffsets.current.length > discard.length) {
         randomOffsets.current = randomOffsets.current.filter((_, i) => i !== randomOffsets.current.length - 1);
         randomRotations.current = randomRotations.current.filter((_, i) => i !== randomRotations.current.length - 1);
     }

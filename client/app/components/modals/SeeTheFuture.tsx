@@ -30,8 +30,6 @@ export default function SeeTheFuture({theFuture, callback}: { theFuture: Card[],
     let room = useColyseusRoom();
     let turnState = useColyseusState(state => state.turnState);
 
-    if (!room || turnState === undefined) return;
-
     let alter = turnState === TurnState.AlteringTheFuture;
 
     let [indices, setIndices] = useState([0, 1, 2]);
@@ -77,7 +75,7 @@ export default function SeeTheFuture({theFuture, callback}: { theFuture: Card[],
             </div>
 
             <button onClick={() => {
-                if (alter) {
+                if (alter && room) {
                     room.send("alterTheFuture", {cards: indices.map(index => theFuture[index])})
                 }
                 callback();

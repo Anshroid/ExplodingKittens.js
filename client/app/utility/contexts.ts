@@ -22,7 +22,7 @@ export class LocalStorageContextType {
         this.setShowTooltips = setShowTooltips;
     }
 
-    showTooltips: boolean;
+    showTooltips: boolean = true;
     setShowTooltips: Dispatch<SetStateAction<boolean>>;
 }
 

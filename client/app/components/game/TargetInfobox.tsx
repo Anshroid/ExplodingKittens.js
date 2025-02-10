@@ -13,12 +13,11 @@ export default function TargetInfobox() {
     let [hidden, setHidden] = useState(true);
 
     let room = useColyseusRoom();
-    if (room == undefined) return;
-
     let players = useColyseusState(state => state.players);
-    if (players == undefined) return;
 
     useEffect(() => {
+        if (!room || !players) return () => {};
+
         room.onMessage("cardTarget", message => {
             setHidden(false);
             setMessage(`Targeted at ${players.at(message.target).displayName}!`);
@@ -45,7 +44,7 @@ export default function TargetInfobox() {
         });
 
         return () => {removeListener()}
-    }, []);
+    }, [room]);
 
     return (
         <div className={"w-36 absolute top-4 bg-red-800 rounded-lg transition-opacity " + (hidden ? "opacity-0" : "opacity-100")}>

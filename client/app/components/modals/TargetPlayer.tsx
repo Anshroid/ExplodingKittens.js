@@ -8,11 +8,9 @@ import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
  */
 export default function TargetPlayer({callback}: {callback: (sessionId: string) => void}) {
     let room = useColyseusRoom();
-    let allPlayers = useColyseusState(state => state.players);
+    let allPlayers = useColyseusState(state => state.players) ?? [];
 
-    if (!allPlayers || !room) return;
-
-    let players = allPlayers.filter(player => player.sessionId !== room.sessionId);
+    let players = allPlayers.filter(player => room && player.sessionId !== room.sessionId);
 
     return (
         <ul>

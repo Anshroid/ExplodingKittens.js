@@ -28,10 +28,8 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let [drawing, setDrawing] = useState(false);
     let [suspendTransition, setSuspendTransition] = useState(false); // Transitions should be suspended while the top card changes
 
-    let cardsInDeck = useColyseusState(state => state.deckLength);
+    let cardsInDeck = useColyseusState(state => state.deckLength) ?? 0;
     let [lastCardsInDeck, setLastCardsInDeck] = useState(0);
-
-    if (cardsInDeck == undefined) return;
 
     if (lastCardsInDeck !== cardsInDeck) {
         setLastCardsInDeck(cardsInDeck);
@@ -46,6 +44,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
         if (suspendTransition && !drawing) setTimeout(() => setSuspendTransition(false), 200); // Resume transitions after the card has returned
     }, [suspendTransition, drawing]);
 
+    // Logic to keep track of shuffle positions and aesthetic offsets
     let [shufflePositions, setShufflePositions] = useState(new Array(cardsInDeck).fill(0).map(_ => [0, 0]));
     let randomOffsets = useRef(new Array(cardsInDeck).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
 
@@ -63,6 +62,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
         setShufflePositions(newShufflePositions)
     }
 
+    // Imploding kitten tracker
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
     let implosionIndex: number | undefined = undefined;
     if (distanceToImplosion != undefined) implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
@@ -137,7 +137,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     )
 
     function shuffle() {
-        if (cardsInDeck == undefined) return;
+        if (!cardsInDeck) return;
 
         setAngleX(0);
         setAngleZ(0);

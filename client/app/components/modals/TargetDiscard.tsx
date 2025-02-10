@@ -10,8 +10,7 @@ import {useContext} from "react";
  * @constructor
  */
 export default function TargetDiscard({callback}: { callback: (targetCard: Card) => void }) {
-    let discard = useColyseusState(state => state.discard);
-    if (discard === undefined) return;
+    let discard = useColyseusState(state => state.discard) ?? [];
 
     const showTooltips = useContext(LocalStorageContext).showTooltips;
 

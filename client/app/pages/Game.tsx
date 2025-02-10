@@ -23,40 +23,23 @@ export default function Game() {
     // let {auth, discordSDK} = useContext(DiscordSDKContext);
     let room = useColyseusRoom();
     let turnState = useColyseusState(state => state.turnState);
-    let turnIndex = useColyseusState(state => state.turnIndex);
-    let playerIndexMap = useColyseusState(state => state.playerIndexMap)
-    let players = useColyseusState(state => state.players);
-    let spectators = useColyseusState(state => state.spectators);
-    if (spectators == undefined) return;
-
+    let turnIndex = useColyseusState(state => state.turnIndex) ?? -1;
+    let playerIndexMap = useColyseusState(state => state.playerIndexMap) ?? new Map();
+    let players = useColyseusState(state => state.players) ?? [];
+    let spectators = useColyseusState(state => state.spectators) ?? [];
     let ownerId = useColyseusState(state => state.ownerId);
     let turnRepeats = useColyseusState(state => state.turnRepeats);
 
-    if (room === undefined || turnState === undefined || turnIndex === undefined || playerIndexMap === undefined || players == undefined) return;
-
-    let ourIndex = playerIndexMap.get(room.sessionId);
-    if (ourIndex === undefined) return;
-
-    let cards = players.at(ourIndex)?.cards;
-    if (cards === undefined) return;
-    // let [errorAck, setErrorAck] = useState<boolean>(false);
-    // let numCards = players.at(ourIndex)?.numCards;
-    // if (cards.length !== numCards && !errorAck) {
-    //     return (
-    //         <>
-    //             <p>A non-fatal error has occurred (numCard mismatch), report the current situation to <code>anshroid</code> and press the below button to continue.</p>
-    //             <button onClick={() => setErrorAck(true)}>Continue</button>
-    //         </>
-    //     )
-    // }
-    // if (errorAck && cards.length === numCards) setErrorAck(false);
+    let ourIndex = room ? playerIndexMap.get(room.sessionId) : -1;
+    let cardsSchema = players.at(ourIndex)?.cards;
+    let cards = cardsSchema ? cardsSchema.toArray() : [];
 
     let [selectedCardMask, setSelectedCardMask] = useState<Array<boolean>>([]);
     let [cardOrder, setCardOrder] = useState<Array<number>>([]);
     let [prevCards, setPrevCards] = useState<Array<Card>>([]);
 
     // Update card order when cards change (complicated!)
-    if (cards.toJSON().length !== prevCards.length || !cards.toJSON().every((card, index) => prevCards[index] === card)) {
+    if (cards.length !== prevCards.length || !cards.every((card, index) => prevCards[index] === card)) {
         let newCardOrder = structuredClone(cardOrder);
         if (prevCards.length > cards.length) { // Cards removed
             let removedIndices: number[] = [];
@@ -69,22 +52,24 @@ export default function Game() {
             newCardOrder = newCardOrder
                 .filter(elem => !removedIndices.includes(elem))
                 .map(elem => elem - removedIndices.filter(index => elem >= index).length)
-        } else if (prevCards.length < cards.toJSON().length) { // Cards added
+        } else if (prevCards.length < cards.length) { // Cards added
             cards.slice(prevCards.length).forEach((_, index) => newCardOrder.push(prevCards.length + index));
         }
 
-        setPrevCards(cards.toJSON());
+        setPrevCards(cards);
         setCardOrder(newCardOrder);
         setSelectedCardMask(cards.map(_ => false));
     }
 
     let selectedCards = cards.filter((_, index) => selectedCardMask[index]);
-    const isPlayAllowed = isPlayValid(selectedCards) && turnState === TurnState.Normal && playerIndexMap.get(room.sessionId) === turnIndex;
+    const isPlayAllowed = !!room && isPlayValid(selectedCards) && turnState === TurnState.Normal && playerIndexMap.get(room.sessionId) === turnIndex;
 
     let [currentModal, setCurrentModal] = useState(ModalType.None);
     let [theFuture, setTheFuture] = useState<Card[]>([])
 
     useEffect(() => {
+        if (!room) return () => {}
+
         const listeners: Array<() => void> = []
 
         // Listen to schema changes
@@ -124,7 +109,7 @@ export default function Game() {
                 removeCallback()
             });
         }
-    }, [turnIndex, ownerId]);
+    }, [turnIndex, ownerId, room]);
 
     function playCallback(targetSessionId?: string, targetCard?: Card) {
         if (!room || !playerIndexMap) return;
@@ -248,12 +233,12 @@ export default function Game() {
                                 <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
                             {/*<p>Turn state: {turnState}</p>*/}
-                            <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
+                            <p>{"It's " + players.at(turnIndex)?.displayName + "'s turn x" + turnRepeats}</p>
                         </div>
 
                         <div className={"flex flex-row justify-center md:gap-20 gap-10"}>
-                            <Deck drawCallback={() => room.send("drawCard")}
-                                  drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
+                            <Deck drawCallback={() => room && room.send("drawCard")}
+                                  drawDisabled={!room || turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
 
                             <Discard/>
                         </div>
@@ -268,7 +253,7 @@ export default function Game() {
                         {/*}} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}*/}
                         {/*        className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!*/}
                         {/*</button>*/}
-                        <CardHand cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
+                        <CardHand cards={cards} selectedCardMask={selectedCardMask}
                                   setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
                                   activeId={activeId} isPlayAllowed={isPlayAllowed}/>
                     </div>

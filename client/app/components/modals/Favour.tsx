@@ -8,17 +8,13 @@ import {CardNames} from "../../../../server/shared/card";
  * @constructor
  */
 export default function Favour({callback}: { callback: () => void }) {
-    let players = useColyseusState((state) => state.players);
-    let playerIndexMap = useColyseusState((state) => state.playerIndexMap)
     let room = useColyseusRoom();
 
-    if (!players || !playerIndexMap || !room) return;
-
-    let ourIndex = playerIndexMap.get(room.sessionId);
-    if (ourIndex === undefined) return;
-
-    let cards = players.at(ourIndex)?.cards;
-    if (!cards) return;
+    let playerIndexMap = useColyseusState(state => state.playerIndexMap) ?? new Map();
+    let players = useColyseusState(state => state.players) ?? [];
+    let ourIndex = room ? playerIndexMap.get(room.sessionId) : -1;
+    let cardsSchema = players.at(ourIndex)?.cards;
+    let cards = cardsSchema ? cardsSchema.toArray() : [];
 
     return (
         <>
@@ -26,7 +22,7 @@ export default function Favour({callback}: { callback: () => void }) {
                 {cards.map((card, index) => {
                     return <li key={index}>
                         <button onClick={() => {
-                            room.send("favourResponse", {card: card});
+                            room && room.send("favourResponse", {card: card});
                             callback();
                         }}>{CardNames.get(card)}</button>
                     </li>
