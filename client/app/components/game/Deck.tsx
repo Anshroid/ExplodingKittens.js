@@ -52,7 +52,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     let newShufflePositions = structuredClone(shufflePositions);
     while (newShufflePositions.length < cardsInDeck) {
         randomOffsets.current = randomOffsets.current.concat([[(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]]);
-        newShufflePositions.concat([[0, 0]])
+        newShufflePositions.push([0, 0])
     }
     while (newShufflePositions.length > cardsInDeck) {
         randomOffsets.current = randomOffsets.current.filter((_, i) => i !== randomOffsets.current.length - 1);
