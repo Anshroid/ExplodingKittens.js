@@ -220,7 +220,7 @@ export class GameRoom extends Room<GameRoomState> {
 
                             let stolenCard = this.state.players.at(message.target).cards[stealIndex];
                             this.state.players.at(message.target).cards.deleteAt(stealIndex);
-                            this.state.players.at(message.target).numCards = this.state.players.at(this.state.turnIndex).cards.length;
+                            this.state.players.at(message.target).numCards = this.state.players.at(message.target).cards.length;
 
                             this.state.players.at(this.state.turnIndex).cards.push(stolenCard);
                             this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
@@ -236,7 +236,7 @@ export class GameRoom extends Room<GameRoomState> {
                                 client.send("comboFail");
                                 break;
                             }
-                            this.state.players.at(message.target).numCards = this.state.players.at(this.state.turnIndex).cards.length;
+                            this.state.players.at(message.target).numCards = this.state.players.at(message.target).cards.length;
 
                             this.state.players.at(this.state.turnIndex).cards.push(message.targetCard);
                             this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
