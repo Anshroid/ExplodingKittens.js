@@ -1,6 +1,6 @@
-import {HTMLAttributes} from "react";
+import {HTMLAttributes, useContext} from "react";
 import ReactSwitch from "react-switch";
-import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
+import {LocalStorageContext, useColyseusRoom, useColyseusState} from "../../utility/contexts";
 
 /**
  * Displays game settings that can be changed if the player is the owner
@@ -12,10 +12,12 @@ export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
     let room = useColyseusRoom();
     let isImplodingEnabled = useColyseusState((state) => state.isImplodingEnabled)
     let ownerId = useColyseusState((state) => state.ownerId);
+    const {showTooltips, setShowTooltips} = useContext(LocalStorageContext);
 
     if (isImplodingEnabled === undefined || room === undefined) return;
 
     let isOwner = room.sessionId === ownerId;
+
 
     return (
         <div {...props}>
@@ -24,6 +26,11 @@ export default function SettingsList(props: HTMLAttributes<HTMLDivElement>) {
             <ReactSwitch checked={isImplodingEnabled} onChange={(checked) => {
                 room.send("changeSettings", {isImplodingEnabled: checked, nopeQTECooldown: 3000})
             }} disabled={!isOwner} className={"align-middle ml-1 scale-75"} checkedIcon={false} uncheckedIcon={false}/>
+            <hr className={"mt-3 mb-3 opacity-30"}/>
+            <label className={"align-middle"}>Show card tooltips?</label>
+            <ReactSwitch checked={showTooltips} onChange={(checked) => {
+                setShowTooltips(checked);
+            }} className={"align-middle ml-1 scale-75"} checkedIcon={false} uncheckedIcon={false}/>
         </div>
     )
 }

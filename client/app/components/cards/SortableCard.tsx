@@ -1,8 +1,9 @@
 import {Card} from "../../../../server/shared/card";
 import {useSortable} from "@dnd-kit/sortable";
 import {CSS} from '@dnd-kit/utilities';
-import {HTMLAttributes} from "react";
+import {HTMLAttributes, useContext} from "react";
 import CardComponent from "./CardComponent";
+import {LocalStorageContext} from "../../utility/contexts";
 
 /**
  * A card in a list with the capability to be dragged and dropped to sort.
@@ -26,6 +27,8 @@ export default function SortableCard({card, id, onclick, ...props}: {
         transition
     } = useSortable({id: id});
 
+    const showTooltips = useContext(LocalStorageContext).showTooltips;
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition
@@ -33,7 +36,7 @@ export default function SortableCard({card, id, onclick, ...props}: {
 
     return (
         <div {...props}>
-            <CardComponent ref={setNodeRef} style={style} card={card} {...attributes} {...listeners} onClick={onclick}/>
+            <CardComponent ref={setNodeRef} style={style} card={card} showTooltips={showTooltips} {...attributes} {...listeners} onClick={onclick}/>
         </div>
     );
 }

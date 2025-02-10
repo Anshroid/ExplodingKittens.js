@@ -33,7 +33,7 @@ export default function DroppableCard({card, selectedCards, isPlayAllowed}: { ca
             className={"md:min-w-36 md:min-h-[200px] min-w-24 min-h-[130px]"}> {/* Ensure the overlay still has dimensions when the cards are transformed and absolutely positioned */}
             {
                 selectedCards.filter((_, i) => i != selectedCards.indexOf(card)).map((selectedCard, i) => (
-                    <CardComponent card={selectedCard} key={i} style={{
+                    <CardComponent card={selectedCard} showTooltips={false} key={i} style={{
                         transform: `
                             rotate3d(1,0,0,${initialAngleX}deg)
                             rotate3d(0,0,1,${initialAngleZ + i * fanAngleZOffset}deg)
@@ -41,7 +41,7 @@ export default function DroppableCard({card, selectedCards, isPlayAllowed}: { ca
                     }} className={"transition-transform absolute " + (overDiscardPile && isPlayAllowed ? "" : "hidden")}/>
                 ))
             }
-            <CardComponent card={card} key={selectedCards.length - 1} style={{
+            <CardComponent showTooltips={false} card={card} key={selectedCards.length - 1} style={{
                 transform: overDiscardPile && isPlayAllowed ? `
                             rotate3d(1,0,0,${initialAngleX}deg)
                             rotate3d(0,0,1,${initialAngleZ + (selectedCards.length - 1) * fanAngleZOffset}deg)

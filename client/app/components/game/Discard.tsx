@@ -1,6 +1,6 @@
 import CardComponent from "../cards/CardComponent";
-import {useRef, useState} from "react";
-import {useColyseusState} from "../../utility/contexts";
+import {useContext, useRef, useState} from "react";
+import {LocalStorageContext, useColyseusState} from "../../utility/contexts";
 import {
     cardSeparation,
     fanAngleX,
@@ -41,6 +41,8 @@ export default function Discard() {
         id: "discard-pile"
     })
 
+    const showTooltips = useContext(LocalStorageContext).showTooltips;
+
     if (!discard) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
 
     return (
@@ -54,7 +56,7 @@ export default function Discard() {
             <TargetInfobox/>
 
             {discard.map((card, i) => (
-                <CardComponent card={card} style={{
+                <CardComponent card={card} showTooltips={showTooltips} style={{
                     transform: `
                         rotate3d(1,0,0,${angleX}deg) 
                         rotate3d(0,0,1,${angleZOffset ? initialAngleZ + i * angleZOffset : randomRotations.current[i]}deg)

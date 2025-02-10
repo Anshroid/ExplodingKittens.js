@@ -1,6 +1,6 @@
 import {AuthResponse} from "./discord_sdk";
 import {DiscordSDK} from "@discord/embedded-app-sdk";
-import {createContext} from "react";
+import {createContext, Dispatch, SetStateAction} from "react";
 import {colyseus} from "@p3ntest/use-colyseus"
 import {GameRoomState} from "../../../server/src/rooms/schema/GameRoomState";
 
@@ -16,6 +16,17 @@ export class DiscordSDKContextType {
 
 export const DiscordSDKContext = createContext(new DiscordSDKContextType());
 
+export class LocalStorageContextType {
+    constructor(showTooltips: boolean, setShowTooltips: Dispatch<SetStateAction<boolean>>) {
+        this.showTooltips = showTooltips;
+        this.setShowTooltips = setShowTooltips;
+    }
+
+    showTooltips: boolean;
+    setShowTooltips: Dispatch<SetStateAction<boolean>>;
+}
+
+export const LocalStorageContext = createContext(new LocalStorageContextType(true, () => {}));
 
 export const {
     client,

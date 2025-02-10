@@ -39,7 +39,7 @@ export default function ChoosePositionDeck({doneCallback}: { doneCallback: () =>
             {new Array(cardsInDeck + 1).fill(0).map((_, i) => (
                 <CardComponent card={(i === implosionIndex && distanceToImplosion !== -1) ||
                 (turnState == TurnState.ChoosingImplodingPosition && i == theCard)
-                    ? Card.IMPLODING : Card.BACK} style={{
+                    ? Card.IMPLODING : Card.BACK} showTooltips={false} style={{
                     transform: `rotate3d(1,0,0,${initialAngleX}deg) 
                                     rotate3d(0,0,1,${initialAngleZ}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)

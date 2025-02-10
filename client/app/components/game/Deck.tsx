@@ -91,7 +91,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
             }
         }}>
             {new Array(cardsInDeck - 1).fill(0).map((_, i) => (
-                <CardComponent card={i === implosionIndex ? Card.IMPLODING : Card.BACK} style={{
+                <CardComponent card={i === implosionIndex ? Card.IMPLODING : Card.BACK} showTooltips={false} style={{
                     transform: `rotate3d(1,0,0,${angleX}deg) 
                                     rotate3d(0,0,1,${angleZ + i * angleZOffset}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)
@@ -101,7 +101,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
             ))}
 
             {/* Render top card separately */}
-            <CardComponent card={distanceToImplosion === 0 ? Card.IMPLODING : Card.BACK}
+            <CardComponent card={distanceToImplosion === 0 ? Card.IMPLODING : Card.BACK} showTooltips={false}
                            style={{
                                transform: `rotate3d(1,0,0,${drawing ? 0 : angleX}deg) 
                                    rotate3d(0,0,1,${drawing ? 0 : angleZ + (cardsInDeck - 1) * angleZOffset}deg) 

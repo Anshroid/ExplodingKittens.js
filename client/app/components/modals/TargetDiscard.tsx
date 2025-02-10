@@ -1,6 +1,7 @@
-import {useColyseusState} from "../../utility/contexts";
+import {LocalStorageContext, useColyseusState} from "../../utility/contexts";
 import {Card} from "../../../../server/shared/card";
 import CardComponent from "../cards/CardComponent";
+import {useContext} from "react";
 
 /**
  * Displays the modal contents listing all cards in the discard pile so one can be picked
@@ -12,11 +13,13 @@ export default function TargetDiscard({callback}: { callback: (targetCard: Card)
     let discard = useColyseusState(state => state.discard);
     if (discard === undefined) return;
 
+    const showTooltips = useContext(LocalStorageContext).showTooltips;
+
     return (
         <div className="flex flex-row gap-1 flex-wrap justify-center">
             {discard.map((card, index) =>
                 <div key={index}>
-                    <button onClick={() => callback(card)}><CardComponent card={card}/></button>
+                    <button onClick={() => callback(card)}><CardComponent card={card} showTooltips={showTooltips}/></button>
                 </div>
             )}
         </div>
