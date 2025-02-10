@@ -1,5 +1,6 @@
-import {useColyseusRoom, useColyseusState} from "../../utility/contexts";
-import {CardNames} from "../../../../server/shared/card";
+import {LocalStorageContext, useColyseusRoom, useColyseusState} from "../../utility/contexts";
+import CardComponent from "../cards/CardComponent";
+import {useContext} from "react";
 
 /**
  * Displays the modal contents to choose a card to give away to another player. Sends the message to colyseus as well.
@@ -16,18 +17,18 @@ export default function Favour({callback}: { callback: () => void }) {
     let cardsSchema = players.at(ourIndex)?.cards;
     let cards = cardsSchema ? cardsSchema.toArray() : [];
 
+    const showTooltips = useContext(LocalStorageContext).showTooltips;
+
     return (
-        <>
-            <ul>
-                {cards.map((card, index) => {
-                    return <li key={index}>
-                        <button onClick={() => {
-                            room && room.send("favourResponse", {card: card});
-                            callback();
-                        }}>{CardNames.get(card)}</button>
-                    </li>
-                })}
-            </ul>
-        </>
+        <div className="flex flex-row gap-1 flex-wrap justify-center">
+            {cards.map((card, index) =>
+                <div key={index}>
+                    <button onClick={() => {
+                        room && room.send("favourResponse", {card: card});
+                        callback();
+                    }}><CardComponent card={card} showTooltips={showTooltips}/></button>
+                </div>
+            )}
+        </div>
     )
 }
