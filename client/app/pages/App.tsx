@@ -2,7 +2,6 @@ import Lobby from "./Lobby";
 import Game from "./Game";
 import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import Spectate from "./Spectate";
-import Banner from "../../static/background.png";
 
 export default function App() {
     const started = useColyseusState((state) => state.started);
@@ -20,7 +19,7 @@ export default function App() {
 
     return (
         <>
-            <img src={Banner} alt={"background image"} className={"absolute -z-40 h-full w-full object-cover"}/>
+            <img src={"/background.png?url"} alt={"background image"} className={"absolute -z-40 h-full w-full object-cover"}/>
             {started ?
                 (spectating ?
                         <Spectate/>

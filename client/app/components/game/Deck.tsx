@@ -79,7 +79,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
     if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
 
     return (
-        <div className={"h-60 w-60 p-12"} onMouseOver={() => {
+        <div className={"md:h-52 md:w-56 h-40 w-40 p-12"} onMouseOver={() => {
             if (cardsInDeck < fanLimit) {
                 setAngleX(fanAngleX);
                 setAngleZOffset(fanAngleZOffset);
@@ -95,7 +95,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                     transform: `rotate3d(1,0,0,${angleX}deg) 
                                     rotate3d(0,0,1,${angleZ + i * angleZOffset}deg)
                                     translate3d(${randomOffsets.current[i].join("px, ")}px, 0)
-                                    translate3d(${shufflePositions[i].join("px, ")}px, ${i * cardSeparation}px)`,
+                                    translate3d(${newShufflePositions[i].join("px, ")}px, ${i * cardSeparation}px)`,
                     perspective: "1000px"
                 }} className={"absolute transition-transform"} key={i}/>
             ))}
@@ -105,7 +105,7 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
                            style={{
                                transform: `rotate3d(1,0,0,${drawing ? 0 : angleX}deg) 
                                    rotate3d(0,0,1,${drawing ? 0 : angleZ + (cardsInDeck - 1) * angleZOffset}deg) 
-                                   translate3d(${shufflePositions[cardsInDeck - 1][0]}px, ${shufflePositions[cardsInDeck - 1][1]}px, ${(cardsInDeck - 1) * cardSeparation}px)
+                                   translate3d(${newShufflePositions[cardsInDeck - 1][0]}px, ${newShufflePositions[cardsInDeck - 1][1]}px, ${(cardsInDeck - 1) * cardSeparation}px)
                                    translate3d(${topCardTranslate.join("px, ")}px)`,
                                perspective: "1000px"
                            }}

@@ -30,7 +30,7 @@ export default function DroppableCard({card, selectedCards, isPlayAllowed}: { ca
 
     return (
         <div
-            className={"min-w-36 min-h-[200px]"}> {/* Ensure the overlay still has dimensions when the cards are transformed and absolutely positioned */}
+            className={"md:min-w-36 md:min-h-[200px] min-w-24 min-h-[130px]"}> {/* Ensure the overlay still has dimensions when the cards are transformed and absolutely positioned */}
             {
                 selectedCards.filter((_, i) => i != selectedCards.indexOf(card)).map((selectedCard, i) => (
                     <CardComponent card={selectedCard} key={i} style={{

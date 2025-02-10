@@ -241,21 +241,17 @@ export default function Game() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className={"flex-none"}>
+                    <div className={"flex flex-col"}>
                         <div className={"border rounded-md p-4 backdrop-blur backdrop-brightness-50 w-fit m-auto"}>
                             <p>Players: {players.map(player => `${player.displayName} (${player.numCards} cards)`).join(", ")}</p>
                             {spectators.length > 0 ?
                                 <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
-                            <br/>
-
                             {/*<p>Turn state: {turnState}</p>*/}
                             <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
                         </div>
 
-                        <br/>
-
-                        <div className={"flex flex-row justify-center gap-20"}>
+                        <div className={"flex flex-row justify-center md:gap-20 gap-10"}>
                             <Deck drawCallback={() => room.send("drawCard")}
                                   drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
 
@@ -272,8 +268,6 @@ export default function Game() {
                         {/*}} disabled={turnState !== TurnState.Noping || !cards.includes(Card.NOPE)}*/}
                         {/*        className={"rounded-md p-1 m-1 " + (turnState !== TurnState.Noping || !cards.includes(Card.NOPE) ? "bg-red-900" : "bg-red-600")}>Nope!*/}
                         {/*</button>*/}
-                        <br/>
-                        <br/>
                         <CardHand cards={cards.toJSON() as Card[]} selectedCardMask={selectedCardMask}
                                   setSelectedCardMask={setSelectedCardMask} cardOrder={cardOrder}
                                   activeId={activeId} isPlayAllowed={isPlayAllowed}/>

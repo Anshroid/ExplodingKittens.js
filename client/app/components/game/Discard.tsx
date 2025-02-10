@@ -44,7 +44,7 @@ export default function Discard() {
     if (!discard) return <div className="relative flex flex-col place-items-center h-60 w-60"/>;
 
     return (
-        <div className={"h-60 w-60 p-12 relative"} onMouseOver={() => {
+        <div className={"md:h-52 md:w-56 h-40 w-40 p-12 relative"} onMouseOver={() => {
             setAngleX(fanAngleX);
             setAngleZOffset(fanAngleZOffset);
         }} onMouseOut={() => {

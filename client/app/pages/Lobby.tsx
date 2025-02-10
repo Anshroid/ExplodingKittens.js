@@ -2,7 +2,6 @@ import {useColyseusRoom, useColyseusState} from "../utility/contexts";
 import PlayerList from "../components/lobby/PlayerList";
 import SettingsList from "../components/lobby/SettingsList";
 import {useEffect, useRef, useState} from "react";
-import Logo from "../../static/logotransparent.png";
 
 export default function Lobby() {
     let room = useColyseusRoom();
@@ -41,7 +40,7 @@ export default function Lobby() {
                         <SettingsList
                             className={"justify-self-start border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
                         <div className={"flex-grow flex flex-col h-full items-center justify-center"}>
-                            <img src={Logo} alt={"exploding kittens logo"}
+                            <img src={"/logotransparent.png?url"} alt={"exploding kittens logo"}
                                  className={"origin-center backdrop-blur backdrop-hue-rotate-180 rounded-full max-h-[70vh]"}
                                  style={{transform: `translate(${(mousePos[0] - 0.5 * window.innerWidth) * 0.02}px, ${(mousePos[1] - 0.5 * window.innerHeight) * 0.01}px)`}}/>
                         </div>

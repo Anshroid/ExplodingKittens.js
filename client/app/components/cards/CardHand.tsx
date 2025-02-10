@@ -50,6 +50,8 @@ export default function CardHand({cards, selectedCardMask, setSelectedCardMask, 
         } else {
             setHandSizeMargin(1);
         }
+
+        console.log(`[ExplodingKittens Debug] hi ${cards.length}`)
     }
 
     useEffect(() => {
@@ -58,7 +60,7 @@ export default function CardHand({cards, selectedCardMask, setSelectedCardMask, 
         return () => {
             window.removeEventListener("resize", handleResize);
         }
-    }, []);
+    }, [cards]); // Handler needs to be set up for the current number of cards
 
     let [prevLength, setPrevLength] = useState(0);
     if (prevLength !== cards.length) {
