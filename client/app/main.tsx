@@ -45,8 +45,8 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
                 console.log(`[ExplodingKittens] Failed to join, creating room. ${e}`)
                 room = await client.create<GameRoomState>("game_room", {instanceId: instanceId, ...joinOptions})
                 await setCurrentRoom(room);
-                break;
             }
+            break;
         }
 
         addEventListener("unload", () => {
