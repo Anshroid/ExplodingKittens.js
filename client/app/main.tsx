@@ -7,6 +7,7 @@ import {DiscordSDK} from "@discord/embedded-app-sdk";
 import {client, DiscordSDKContext, DiscordSDKContextType, setCurrentRoom} from "./utility/contexts";
 import {GameRoomState} from "../../server/src/rooms/schema/GameRoomState";
 import {Room} from "colyseus.js";
+import {MatchMakeError} from "colyseus.js/lib/Client";
 
 const discordSDK = new DiscordSDK("1248976494152122419");
 
@@ -33,13 +34,19 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
         let availableRooms = await client.getAvailableRooms()
         console.log(`[ExplodingKittens] Available Rooms: ${availableRooms.toString()}`);
 
-        try {
-            room = await client.joinById<GameRoomState>(instanceId, joinOptions)
-            await setCurrentRoom(room);
-        } catch (e) {
-            console.log(`[ExplodingKittens] Failed to join, creating room. Error: ${e}`)
-            room = await client.create<GameRoomState>("game_room", {instanceId: instanceId, ...joinOptions})
-            await setCurrentRoom(room);
+        while (true) {
+            try {
+                room = await client.joinById<GameRoomState>(instanceId, joinOptions)
+                await setCurrentRoom(room);
+            } catch (e) {
+                console.log(`[ExplodingKittens] Failed to join, retrying. ${e}`)
+                if ((e as MatchMakeError).message.includes("is already full")) continue;
+
+                console.log(`[ExplodingKittens] Failed to join, creating room. ${e}`)
+                room = await client.create<GameRoomState>("game_room", {instanceId: instanceId, ...joinOptions})
+                await setCurrentRoom(room);
+                break;
+            }
         }
 
         addEventListener("unload", () => {
