@@ -30,34 +30,40 @@ export default function Lobby() {
 
     return (
         <>
-            {room ?
-                <div className={"flex flex-col place-items-center p-5 h-full"} onMouseMove={(event) => {
-                    setMousePos([event.clientX, event.clientY]);
-                }} onMouseOut={() => {
-                    setMousePos([window.innerWidth / 2, window.innerHeight / 2]);
-                }}>
-                    <div className={"flex flex-row place-items-center h-full w-full"}>
-                        <SettingsList
-                            className={"justify-self-start border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
-                        <div className={"flex-grow flex flex-col h-full items-center justify-center"}>
-                            <img src={"/logotransparent.png?url"} alt={"exploding kittens logo"}
-                                 className={"origin-center backdrop-blur backdrop-hue-rotate-180 rounded-full max-h-[70vh]"}
-                                 style={{transform: `translate(${(mousePos[0] - 0.5 * window.innerWidth) * 0.02}px, ${(mousePos[1] - 0.5 * window.innerHeight) * 0.01}px)`}}/>
+            <div className={"h-full sm:hidden flex flex-col justify-center text-center p-6 align-middle"}>
+                <PlayerList
+                    className={"justify-self-end border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
+            </div>
+            <div className={"h-full hidden sm:block"}>
+                {room ?
+                    <div className={"flex flex-col place-items-center p-5 h-full"} onMouseMove={(event) => {
+                        setMousePos([event.clientX, event.clientY]);
+                    }} onMouseOut={() => {
+                        setMousePos([window.innerWidth / 2, window.innerHeight / 2]);
+                    }}>
+                        <div className={"flex flex-row place-items-center h-full w-full"}>
+                            <SettingsList
+                                className={"justify-self-start border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
+                            <div className={"flex-grow flex flex-col h-full items-center justify-center"}>
+                                <img src={"/logotransparent.png?url"} alt={"exploding kittens logo"}
+                                     className={"origin-center backdrop-blur backdrop-hue-rotate-180 rounded-full max-h-[70vh]"}
+                                     style={{transform: `translate(${(mousePos[0] - 0.5 * window.innerWidth) * 0.02}px, ${(mousePos[1] - 0.5 * window.innerHeight) * 0.01}px)`}}/>
+                            </div>
+                            <PlayerList
+                                className={"justify-self-end border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
                         </div>
-                        <PlayerList
-                            className={"justify-self-end border rounded-md p-4 backdrop-blur backdrop-brightness-50 flex-1"}/>
+                        <button
+                            className={"align-bottom py-1 px-4 font-bold text-2xl bg-red-950 rounded-2xl duration-75 outline outline-2 " + ((isOwner && enoughPlayers) ? "hover:-translate-y-2" : "")}
+                            onClick={() => {
+                                room.send("start")
+                            }} disabled={!isOwner || !enoughPlayers}
+                            title={titleText}>Start!
+                        </button>
                     </div>
-                    <button
-                        className={"align-bottom py-1 px-4 font-bold text-2xl bg-red-950 rounded-2xl duration-75 outline outline-2 " + ((isOwner && enoughPlayers) ? "hover:-translate-y-2" : "")}
-                        onClick={() => {
-                            room.send("start")
-                        }} disabled={!isOwner || !enoughPlayers}
-                        title={titleText}>Start!
-                    </button>
-                </div>
-                :
-                <p className={"text-center mt-[45vh]"}>Joining room...</p>
-            }
+                    :
+                    <p className={"text-center mt-[45vh]"}>Joining room...</p>
+                }
+            </div>
         </>
     )
 }
