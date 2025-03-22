@@ -27,9 +27,6 @@ export default function ChoosePositionDeck({doneCallback}: { doneCallback: () =>
 
     let room = useColyseusRoom();
 
-    if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-60 w-60">No cards in
-        deck!</div>;
-
     return (
         <div className={"h-60 w-60 p-12"} onClick={() => {
             room?.send("choosePosition", {index: cardsInDeck - theCard});
