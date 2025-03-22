@@ -416,9 +416,9 @@ export class GameRoom extends Room<GameRoomState> {
         if (card === Card.IMPLODING) {
             if (this.state.implosionRevealed) {
                 this.broadcast("imploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
-                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
+                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
             } else {
                 this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
@@ -431,9 +431,9 @@ export class GameRoom extends Room<GameRoomState> {
             if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
                 this.broadcast("exploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
-                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
+                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
             } else {
                 this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.EXPLODING));
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
