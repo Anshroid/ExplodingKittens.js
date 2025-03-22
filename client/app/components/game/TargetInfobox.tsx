@@ -20,17 +20,17 @@ export default function TargetInfobox() {
 
         room.onMessage("cardTarget", message => {
             setHidden(false);
-            setMessage(`Targeted at ${players.at(message.target).displayName}!`);
+            setMessage(`Targeted at ${players.toArray()[message.target].displayName}!`);
         });
 
         room.onMessage("comboTarget", message => {
             setHidden(false);
             switch (message.numCards) {
                 case 2:
-                    setMessage(`Targeted at ${players.at(message.target).displayName}!`);
+                    setMessage(`Targeted at ${players.toArray()[message.target].displayName}!`);
                     break;
                 case 3:
-                    setMessage(`Targeted at ${players.at(message.target).displayName}, for ${CardNames.get(message.targetCard)}`);
+                    setMessage(`Targeted at ${players.toArray()[message.target].displayName}, for ${CardNames.get(message.targetCard)}`);
                     break;
                 case 5:
                     setMessage(`Looking for ${CardNames.get(message.targetCard)}!`);

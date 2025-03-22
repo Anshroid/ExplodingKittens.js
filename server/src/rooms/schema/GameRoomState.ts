@@ -50,6 +50,7 @@ export class GameRoomState extends Schema {
 
     // Imploding kitten state
     @type("boolean") implosionRevealed: boolean = false;
+    @type("boolean") implosionVisible: boolean = false;
     @filter(function (
         this: GameRoomState,
         _: Client,
@@ -60,6 +61,7 @@ export class GameRoomState extends Schema {
     @type("number") distanceToImplosion: number;
     setDistanceToImplosion(value: number) {
         this.distanceToImplosion = value;
+        this.implosionVisible = this.implosionRevealed && value < 10
         this.distanceToImplosionEstimator = ["Top", "Middle", "Bottom"][Math.floor(3 * this.distanceToImplosion / this.deck.length)]
     }
 

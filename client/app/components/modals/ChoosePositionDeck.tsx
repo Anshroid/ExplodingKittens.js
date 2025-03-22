@@ -17,6 +17,9 @@ export default function ChoosePositionDeck({doneCallback}: { doneCallback: () =>
     let randomOffsets = useRef(new Array(cardsInDeck + 1).fill(0).map(_ => [(Math.random() - 0.5) * randomOffsetFactor, (Math.random() - 0.5) * randomOffsetFactor]));
 
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
+    let implosionVisible = useColyseusState(state => state.implosionVisible);
+    if (!implosionVisible) distanceToImplosion = -1;
+
     let implosionIndex: number | undefined = undefined;
     if (distanceToImplosion != undefined) implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
 
@@ -26,9 +29,6 @@ export default function ChoosePositionDeck({doneCallback}: { doneCallback: () =>
     let turnState = useColyseusState(state => state.turnState);
 
     let room = useColyseusRoom();
-
-    if (!cardsInDeck) return <div className="relative flex flex-col place-items-center h-60 w-60">No cards in
-        deck!</div>;
 
     return (
         <div className={"h-60 w-60 p-12"} onClick={() => {
