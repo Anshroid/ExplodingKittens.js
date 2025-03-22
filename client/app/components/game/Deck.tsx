@@ -64,8 +64,13 @@ export default function Deck({drawCallback, drawDisabled}: { drawCallback: () =>
 
     // Imploding kitten tracker
     let distanceToImplosion = useColyseusState(state => state.distanceToImplosion);
+    let implosionVisible = useColyseusState(state => state.implosionVisible);
+    if (!implosionVisible) distanceToImplosion = -1;
+
     let implosionIndex: number | undefined = undefined;
     if (distanceToImplosion != undefined) implosionIndex = (cardsInDeck - 1) - distanceToImplosion;
+
+    console.log("[ExplodingKittensDebug] imp idx", distanceToImplosion);
 
     let room = useColyseusRoom();
     useEffect(() => {
