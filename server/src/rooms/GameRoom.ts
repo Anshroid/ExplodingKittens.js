@@ -373,6 +373,9 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.players.at(client.userData.playerIndex).cards.forEach((card) => {
                 this.state.discard.push(card);
             })
+
+            let toRemove = this.state.deck.lastIndexOf(Card.EXPLODING);
+            this.state.deck.filter((_, i) => i !== toRemove);
         }
 
         if (client.userData.isSpectator) {
@@ -413,7 +416,7 @@ export class GameRoom extends Room<GameRoomState> {
         if (card === Card.IMPLODING) {
             if (this.state.implosionRevealed) {
                 this.broadcast("imploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
-                this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
+                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
             } else {
@@ -428,7 +431,7 @@ export class GameRoom extends Room<GameRoomState> {
             if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
                 this.broadcast("exploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
-                this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
+                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
                 this.state.turnRepeats = 1; // Make sure next player only has one turn
                 this.killPlayer(this.state.turnIndex);
             } else {
@@ -458,10 +461,6 @@ export class GameRoom extends Room<GameRoomState> {
         spectator.displayName = deadPlayer.displayName;
         this.state.spectators.push(spectator);
         this.updatePlayerIndices();
-
-        if (this.state.players.length === 1) {
-            this.state.turnState = TurnState.GameOver;
-        }
     }
 
     processNopeQTE(callback: () => void) {
@@ -489,6 +488,10 @@ export class GameRoom extends Room<GameRoomState> {
         for (const [index, player] of this.state.spectators.toArray().entries()) {
             this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: true};
             this.state.playerIndexMap.set(player.sessionId, -1);
+        }
+
+        if (this.state.players.length === 1) {
+            this.state.turnState = TurnState.GameOver;
         }
     }
 
