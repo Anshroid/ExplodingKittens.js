@@ -24,23 +24,27 @@ export default function Spectate() {
 
     return (
         <>
-            <div className={"flex items-center text-center justify-center h-full"}>
-                <div className={"justify-center flex-none"}>
-                    <h1 className={"font-bold underline"}>You are spectating!</h1>
+            {/* Mini player */}
+            <div className="h-full sm:hidden flex flex-col justify-center text-center p-6 align-middle">
+                <div className={"border rounded-md p-4 backdrop-blur w-fit m-auto"}>
+                    <p>Players: {players.map(player => `${player.displayName} (${player.numCards} cards)`).join(", ")}</p>
+                    {spectators.length > 0 ?
+                        <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
-                    <br/>
+                    <p>{"It's " + players.at(turnIndex)?.displayName + "'s turn x" + turnRepeats}</p>
+                </div>
+            </div>
+            <div className={"items-center text-center justify-center h-full hidden sm:flex"}>
+                <div className={"flex flex-col"}>
+                    <div className={"border rounded-md p-4 backdrop-blur backdrop-brightness-50 w-fit m-auto"}>
+                        <p>Players: {players.map(player => `${player.displayName} (${player.numCards} cards)`).join(", ")}</p>
+                        {spectators.length > 0 ?
+                            <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
-                    <p>Players: {players.map(player => player.displayName).join(", ")}</p>
-                    {spectators.length > 0 ? <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
+                        <p>{"It's " + players.at(turnIndex)?.displayName + "'s turn x" + turnRepeats}</p>
+                    </div>
 
-                    <br/>
-
-                    <p>Turn state: {turnState}</p>
-                    <p>{"It's " + players.at(turnIndex).displayName + "'s turn x" + turnRepeats}</p>
-
-                    <br/>
-
-                    <div className={"flex flex-row justify-center gap-20"}>
+                    <div className={"flex flex-row justify-center md:gap-20 gap-10"}>
                         <Deck drawCallback={() => room.send("drawCard")}
                               drawDisabled={turnState !== TurnState.Normal || playerIndexMap.get(room.sessionId) !== turnIndex}/>
 

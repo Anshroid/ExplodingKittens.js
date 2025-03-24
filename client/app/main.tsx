@@ -22,7 +22,7 @@ setupDiscordSdk(discordSDK).then((receivedAuth) => {
     const loading = document.getElementById("loading");
     if (loading) loading.style.display = 'none';
 
-    const instanceId = discordSDK.instanceId;
+    const instanceId = "i-1353780690470047876-pc-1316834701368885359" // discordSDK.instanceId;
     const joinOptions = {
         displayName: receivedAuth.user.global_name ?? receivedAuth.user.username
     };

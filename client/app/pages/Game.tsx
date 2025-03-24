@@ -224,7 +224,6 @@ export default function Game() {
                     {spectators.length > 0 ?
                         <p>Spectators: {spectators.map(player => player.displayName).join(", ")}</p> : null}
 
-                    {/*<p>Turn state: {turnState}</p>*/}
                     <p>{"It's " + (turnIndex === ourIndex ? "your" : players.at(turnIndex)?.displayName + "'s") + " turn x" + turnRepeats}</p>
                 </div>
             </div>

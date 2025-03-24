@@ -384,6 +384,8 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.players.deleteAt(client.userData.playerIndex);
         }
 
+        this.state.playerIndexMap.delete(client.sessionId);
+
         if (client.sessionId === this.state.ownerId && (this.state.players.length + this.state.spectators.length) > 0) {
             if (this.state.started) {
                 this.state.ownerId = this.state.players.at(0).sessionId;
@@ -393,6 +395,8 @@ export class GameRoom extends Room<GameRoomState> {
         }
 
         this.updatePlayerIndices()
+
+        this.state.turnIndex %= this.state.players.length
     }
 
     onDispose() {
