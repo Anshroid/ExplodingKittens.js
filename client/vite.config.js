@@ -13,11 +13,5 @@ export default defineConfig({
             plugins: [tailwindcss()],
         },
     },
-    server: {
-        hmr: {
-            clientPort: 443,
-        },
-        host: '0.0.0.0',
-    },
     publicDir: "static",
 });
