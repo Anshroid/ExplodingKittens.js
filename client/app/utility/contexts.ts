@@ -33,4 +33,4 @@ export const {
     setCurrentRoom,
     useColyseusRoom,
     useColyseusState
-} = colyseus<GameRoomState>(process.env.NODE_ENV === "development" ? "http://localhost:7777/" : "/.proxy/");
+} = colyseus<GameRoomState>(process.env.NODE_ENV === "development" ? "http://localhost:7777/" : "/.proxy/api/");
