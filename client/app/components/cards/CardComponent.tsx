@@ -12,7 +12,7 @@ interface CardComponentProps {
 
 const CardComponent = forwardRef<HTMLDivElement, CardComponentProps & HTMLAttributes<HTMLDivElement>>(({card, showTooltips, ...props}, ref) => {
   return (
-    <div ref={ref} {...props} className={"md:w-36 w-24 rounded-md text-center " + props.className} title={showTooltips ? CardTooltips.get(card) : ""}>
+    <div ref={ref} {...props} className={"md:w-36 w-24 rounded-md text-center select-none " + props.className} title={showTooltips ? CardTooltips.get(card) : ""}>
       <img alt={CardNames.get(card)} src={"/cards/" + card + ".png"}/>
     </div>
   )
