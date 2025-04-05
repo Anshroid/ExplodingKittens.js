@@ -430,6 +430,19 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.spectators.push(spectator);
         }
 
+        if (this.state.turnIndex === index) {
+            switch (this.state.turnState) {
+                case TurnState.ChoosingExplodingPosition:
+                case TurnState.ChoosingImplodingPosition:
+                    this.state.deck.splice(0, 0, this.state.turnState === TurnState.ChoosingImplodingPosition ? Card.IMPLODING : Card.EXPLODING);
+                    this.state.deckLength = this.state.deck.length;
+
+                    this.state.setDistanceToImplosion(this.state.deck.indexOf(Card.IMPLODING));
+                    break;
+            }
+            this.state.turnState = TurnState.Normal;
+        }
+
         this.state.attacked = false;
         this.state.turnRepeats = 1; // Make sure next player only has one turn
         this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
