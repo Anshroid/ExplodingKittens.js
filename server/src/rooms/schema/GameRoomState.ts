@@ -22,8 +22,22 @@ export class GamePlayer extends Schema {
         return this.sessionId === client.sessionId;
     })
     @type(["number"]) cards = new ArraySchema<Card>();
-    @type("number") numCards: number;
+    @type("number") numCards = 0;
 
+    constructor() {
+        super();
+
+        this.cards.push = (...values) => {
+            this.numCards += values.length;
+            return ArraySchema.prototype.push.apply(this.cards, values);
+        }
+
+        this.cards.deleteAt = (index) => {
+            let success = ArraySchema.prototype.deleteAt.apply(this.cards, [index]);
+            if (success) this.numCards--;
+            return success;
+        }
+    }
 }
 
 export class GameRoomState extends Schema {
