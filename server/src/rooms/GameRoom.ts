@@ -111,8 +111,7 @@ export class GameRoom extends Room<GameRoomState> {
             this.state.setDistanceToImplosion(this.state.distanceToImplosion - 1);
             this.state.players.at(this.state.turnIndex).cards.push(card);
             this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
-            if (this.checkDeath(card)) return;
-            this.endTurn();
+            this.checkCardForDeath(card, true);
         })
 
         this.onMessage("playCard", (client, message: { card: Card, target?: number }) => {
@@ -129,13 +128,17 @@ export class GameRoom extends Room<GameRoomState> {
             this.processNopeQTE(() => {
                 switch (message.card) {
                     case Card.ATTACK:
+                    case Card.TARGETEDATTACK:
                         if (this.state.attacked) {
                             this.state.turnRepeats += 2;
                         } else {
                             this.state.turnRepeats = 2;
                         }
+                        this.state.turnCount++;
                         this.state.attacked = true;
-                        this.endTurn(true);
+                        this.state.turnIndex = message.card == Card.TARGETEDATTACK ?
+                            message.target : // Use target
+                            (this.state.turnIndex + this.state.turnOrder + this.state.players.length) % this.state.players.length; // Use next player, see endTurn for explanation
                         break;
 
                     case Card.SHUFFLE:
@@ -159,8 +162,7 @@ export class GameRoom extends Room<GameRoomState> {
                         this.state.setDistanceToImplosion(this.state.distanceToImplosion); // Recalculate distance estimator
                         this.state.players.at(this.state.turnIndex).cards.push(card);
                         this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
-                        if (this.checkDeath(card)) return;
-                        this.endTurn();
+                        this.checkCardForDeath(card, true);
                         break;
 
                     case Card.ALTERTHEFUTURE:
@@ -170,15 +172,6 @@ export class GameRoom extends Room<GameRoomState> {
                         client.send("theFuture", {cards: this.state.deck.slice(0, 3)});
                         break;
 
-                    case Card.TARGETEDATTACK:
-                        if (this.state.attacked) {
-                            this.state.turnRepeats += 2;
-                        } else {
-                            this.state.turnRepeats = 2;
-                        }
-                        this.state.attacked = true;
-                        this.state.turnIndex = message.target;
-                        break;
 
                     case Card.FAVOUR:
                         this.state.turnState = TurnState.Favouring;
@@ -260,7 +253,7 @@ export class GameRoom extends Room<GameRoomState> {
                         this.state.discard.deleteAt(this.state.discard.indexOf(message.targetCard));
                         this.state.players.at(this.state.turnIndex).cards.push(message.targetCard);
                         this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
-                        this.checkDeath(message.targetCard)
+                        this.checkCardForDeath(message.targetCard, false)
                         break;
 
                     default:
@@ -370,21 +363,18 @@ export class GameRoom extends Room<GameRoomState> {
         if (this.state.started) {
             if (!consented) return;
 
-            this.state.players.at(client.userData.playerIndex).cards.forEach((card) => {
-                this.state.discard.push(card);
-            })
+            if (!client.userData.isSpectator) {
+                this.removePlayer(client.userData.playerIndex, true)
 
-            let toRemove = this.state.deck.lastIndexOf(Card.EXPLODING);
-            this.state.deck.filter((_, i) => i !== toRemove);
-        }
+                let toRemove = this.state.deck.lastIndexOf(Card.EXPLODING);
+                this.state.deck.filter((_, i) => i !== toRemove);
+            } else {
+                this.state.spectators.deleteAt(client.userData.playerIndex);
+            }
 
-        if (client.userData.isSpectator) {
+        } else { // everyone is a spectator in the lobby
             this.state.spectators.deleteAt(client.userData.playerIndex);
-        } else {
-            this.state.players.deleteAt(client.userData.playerIndex);
         }
-
-        this.state.playerIndexMap.delete(client.sessionId);
 
         if (client.sessionId === this.state.ownerId && (this.state.players.length + this.state.spectators.length) > 0) {
             if (this.state.started) {
@@ -394,35 +384,29 @@ export class GameRoom extends Room<GameRoomState> {
             }
         }
 
+        this.state.playerIndexMap.delete(client.sessionId);
         this.updatePlayerIndices()
-
-        this.state.turnIndex %= this.state.players.length
     }
 
     onDispose() {
         this.log("room " + this.roomId + " disposing...");
     }
 
-    endTurn(ignoreRemainingTurns: boolean = false) {
+    endTurn() {
         this.state.turnCount++;
-        if (!ignoreRemainingTurns) {
-            if (this.state.turnRepeats > 1) { // Normal turn, attacked
-                this.state.turnRepeats--;
-                return;
-            } else { // Normal turn including end of attack
-                this.state.attacked = false;
-            }
+        if (this.state.turnRepeats > 1) { // Attacked turn
+            this.state.turnRepeats--;
+        } else { // Normal turn OR end of attack
+            this.state.attacked = false;
+            this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder + this.state.players.length) % this.state.players.length; // Cycle turns, js uses -1 % n = -1, so we must add n to make it positive
         }
-        this.state.turnIndex = (this.state.turnIndex + this.state.turnOrder + this.state.players.length) % this.state.players.length; // Cycle turns, js uses -1 % n = -1, so we must add n to make it positive
     }
 
-    checkDeath(card: Card) {
+    checkCardForDeath(card: Card, shouldEndTurnIfNormal: boolean) {
         if (card === Card.IMPLODING) {
             if (this.state.implosionRevealed) {
                 this.broadcast("imploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
-                this.state.turnRepeats = 1; // Make sure next player only has one turn
-                this.killPlayer(this.state.turnIndex);
-                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
+                this.removePlayer(this.state.turnIndex, true);
             } else {
                 this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.IMPLODING));
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
@@ -430,14 +414,11 @@ export class GameRoom extends Room<GameRoomState> {
                 this.broadcast("implosionRevealed");
                 this.state.turnState = TurnState.ChoosingImplodingPosition
             }
-            return true; // Don't end turn, wait for the response
         } else if (card === Card.EXPLODING) {
             if (!this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.DEFUSE))) {
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
                 this.broadcast("exploded", {player: this.state.players.at(this.state.turnIndex).sessionId});
-                this.state.turnRepeats = 1; // Make sure next player only has one turn
-                this.killPlayer(this.state.turnIndex);
-                this.state.turnIndex %= (this.state.players.length - 1) || 1; // Make sure turn index of next player is correct
+                this.removePlayer(this.state.turnIndex, true);
             } else {
                 this.state.players.at(this.state.turnIndex).cards.deleteAt(this.state.players.at(this.state.turnIndex).cards.indexOf(Card.EXPLODING));
                 this.state.players.at(this.state.turnIndex).numCards = this.state.players.at(this.state.turnIndex).cards.length;
@@ -445,25 +426,34 @@ export class GameRoom extends Room<GameRoomState> {
                 this.broadcast("defused");
                 this.state.turnState = TurnState.ChoosingExplodingPosition
             }
-            return true; // Don't end turn, wait for the response
+        } else {
+            if (shouldEndTurnIfNormal) this.endTurn();
         }
-        return false;
     }
 
-    killPlayer(index: number) {
+    removePlayer(index: number, createSpectator: boolean) {
         this.state.players.at(index).cards.forEach((card) => {
             this.state.discard.push(card)
         })
 
-        this.state.attacked = false;
-
         const deadPlayer = this.state.players.at(index)
         this.state.players.deleteAt(index);
 
-        const spectator = new LobbyPlayer();
-        spectator.sessionId = deadPlayer.sessionId;
-        spectator.displayName = deadPlayer.displayName;
-        this.state.spectators.push(spectator);
+        if (createSpectator) {
+            const spectator = new LobbyPlayer();
+            spectator.sessionId = deadPlayer.sessionId;
+            spectator.displayName = deadPlayer.displayName;
+            this.state.spectators.push(spectator);
+        }
+
+        this.state.attacked = false;
+        this.state.turnRepeats = 1; // Make sure next player only has one turn
+        this.state.turnIndex %= this.state.players.length; // Make sure turn index of next player is correct
+
+        if (this.state.players.length === 1) {
+            this.state.turnState = TurnState.GameOver;
+        }
+
         this.updatePlayerIndices();
     }
 
@@ -492,10 +482,6 @@ export class GameRoom extends Room<GameRoomState> {
         for (const [index, player] of this.state.spectators.toArray().entries()) {
             this.clients.getById(player.sessionId).userData = {playerIndex: index, isSpectator: true};
             this.state.playerIndexMap.set(player.sessionId, -1);
-        }
-
-        if (this.state.players.length === 1) {
-            this.state.turnState = TurnState.GameOver;
         }
     }
 
