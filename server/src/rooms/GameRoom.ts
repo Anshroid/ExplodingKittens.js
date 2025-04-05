@@ -46,7 +46,7 @@ export class GameRoom extends Room<GameRoomState> {
 
             this.state.started = true;
 
-            const gameSize = Math.floor(this.state.spectators.length / 6) + 1
+            const gameSize = Math.floor(this.state.spectators.length / (6 + +this.state.isImplodingEnabled)) + 1
 
             this.state.deck.push(
                 ...Array(4 * gameSize).fill(Card.TACOCAT),
