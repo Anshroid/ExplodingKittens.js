@@ -92,7 +92,7 @@ describe("lobby actions", () => {
     })
 
     it("starting game with oversize room", async () => {
-        const {room, clients} = await setupRoom(colyseus, 6);
+        const {room, clients} = await setupRoom(colyseus, 7);
         clients[0].send("start");
 
         await room.waitForNextPatch();
@@ -100,7 +100,7 @@ describe("lobby actions", () => {
         const playerCards = room.state.players.reduce<Array<Card>>((previous, current) => previous.concat(current.toJSON().cards), []);
         const allCards = room.state.deck.concat(playerCards);
 
-        assert.equal(allCards.length, (73 - 2) * 2 + (5)) // Killing cards aren't doubled
+        assert.equal(allCards.length, (73 - 2) * 2 + (6)) // Killing cards aren't doubled
     });
 });
 
